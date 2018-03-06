@@ -1,19 +1,42 @@
 module Main exposing (..)
 
-import Html exposing (Html, text, div, img)
-import Html.Attributes exposing (src)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 
 
 ---- MODEL ----
 
 
 type alias Model =
-    {}
+    { appName : String
+    , version : String
+    , inputs : List AppInput
+    , parameters : List AppParam
+    }
+
+
+type alias AppInput =
+    { id : String
+    }
+
+
+type alias AppParam =
+    { id : String
+    }
+
+
+initialModel =
+    { appName = "MyNewApp"
+    , version = "0.0.1"
+    , inputs = []
+    , parameters = []
+    }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    ( initialModel, Cmd.none )
 
 
 
@@ -21,12 +44,34 @@ init =
 
 
 type Msg
-    = NoOp
+    = AddInput
+    | UpdateApp String String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        AddInput ->
+            ( model, Cmd.none )
+
+        UpdateApp fldName newValue ->
+            ( updateApp model fldName newValue, Cmd.none )
+
+
+addInput model =
+    model
+
+
+updateApp model fldName newValue =
+    case fldName of
+        "appName" ->
+            { model | appName = newValue }
+
+        "version" ->
+            { model | version = newValue }
+
+        _ ->
+            model
 
 
 
@@ -35,10 +80,48 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ img [ src "/logo.svg" ] []
-        , div [] [ text "Your Elm App is working!" ]
+    Html.form []
+        [ div [ class "form-group", onInput (UpdateApp "appName") ]
+            [ Html.label [] [ text "App Name" ]
+            , Html.input
+                [ type_ "text"
+                , name "appName"
+                , placeholder model.appName
+                , class "form-control"
+                ]
+                []
+            ]
+        , div [ class "form-group", onInput (UpdateApp "version") ]
+            [ Html.label [] [ text "Version" ]
+            , Html.input
+                [ type_ "text"
+                , name "version"
+                , placeholder model.version
+                ]
+                []
+            ]
+        , div [ class "form-group" ]
+            [ Html.label []
+                [ text
+                    ("Inputs ("
+                        ++ toString (List.length model.inputs)
+                        ++ ")"
+                    )
+                ]
+            , Html.button [ onClick AddInput ] [ text "Add Input" ]
+            , showInputs model.inputs
+            ]
         ]
+
+
+showInputs : List AppInput -> Html msg
+showInputs inputs =
+    case List.length inputs of
+        0 ->
+            text "None"
+
+        _ ->
+            text "Not none"
 
 
 

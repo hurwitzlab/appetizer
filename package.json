@@ -1,0 +1,26 @@
+{
+  "name": "appetizer",
+  "version": "1.0.0",
+  "description": "iMicrobe Appetizer",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "elm-live src/Main.elm --output elm.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hurwitzlab/appetizer.git"
+  },
+  "author": "Ken Youens-Clark",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hurwitzlab/appetizer/issues"
+  },
+  "homepage": "https://github.com/hurwitzlab/appetizer#readme",
+  "dependencies": {
+    "bootstrap": "^4.0.0"
+  }
+}

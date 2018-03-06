@@ -12,3 +12,12 @@ node_modules
 
 # Desktop Services Store on macOS
 .DS_Store
+
+dist/
+node_modules/
+plugins/
+*.swp
+js/
+elm.js
+index.html
+package-lock.json
