@@ -12,6 +12,8 @@ import Html.Events exposing (..)
 type alias Model =
     { appName : String
     , version : String
+    , available : Bool
+    , checkpointable : Bool
     , inputs : List AppInput
     , parameters : List AppParam
     , showJson : Bool
@@ -32,6 +34,8 @@ type alias AppParam =
 initialModel =
     { appName = "MyNewApp"
     , version = "0.0.1"
+    , available = True
+    , checkpointable = False
     , inputs = []
     , parameters = []
     , showJson = False
@@ -53,6 +57,8 @@ type Msg
     | ShowJsonDialog
     | ToggleInputForm
     | UpdateApp String String
+    | ToggleAvailable
+    | ToggleCheckpointable
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -69,6 +75,12 @@ update msg model =
 
         UpdateApp fldName newValue ->
             ( updateApp model fldName newValue, Cmd.none )
+
+        ToggleAvailable ->
+            ( { model | available = not model.available }, Cmd.none )
+
+        ToggleCheckpointable ->
+            ( { model | checkpointable = not model.checkpointable }, Cmd.none )
 
 
 addInput model =
@@ -98,7 +110,20 @@ generateJson model =
         ++ "\","
         ++ "\"version\": \""
         ++ model.version
-        ++ "\""
+        ++ "\","
+        ++ "\"available\": "
+        ++ (if model.available then
+                "true"
+            else
+                "false"
+           )
+        ++ ","
+        ++ "\"checkpointable\": "
+        ++ (if model.checkpointable then
+                "true"
+            else
+                "false"
+           )
         ++ "}"
 
 
@@ -221,19 +246,56 @@ view model =
                     ]
                     []
                 ]
-            , div [ class "form-group", onInput (UpdateApp "version") ]
-                [ Html.label [] [ text "Version" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "version"
-                    , placeholder model.version
-                    ]
-                    []
-                ]
-            , viewInputs model
             ]
+        , div [ class "form-group", onInput (UpdateApp "version") ]
+            [ Html.label [] [ text "Version" ]
+            , Html.input
+                [ type_ "text"
+                , name "version"
+                , placeholder model.version
+                ]
+                []
+            ]
+        , div [ class "form-group" ]
+            [ Html.label [] [ text "Available" ]
+            , checkbox ToggleAvailable model.available
+            ]
+        , div [ class "form-group" ]
+            [ Html.label [] [ text "Checkpointable" ]
+            , checkbox ToggleCheckpointable model.checkpointable
+            ]
+        , div [ class "form-group" ]
+            [ Html.label []
+                [ text
+                    ("Inputs ("
+                        ++ toString (List.length model.inputs)
+                        ++ ")"
+                    )
+                ]
+            ]
+        , viewInputs model
         , viewJson model
         ]
+
+
+showInputs : List AppInput -> Html msg
+showInputs inputs =
+    case List.length inputs of
+        0 ->
+            text "None"
+
+        _ ->
+            text "Not none"
+
+
+checkbox : msg -> Bool -> Html msg
+checkbox msg state =
+    Html.input
+        [ type_ "checkbox"
+        , onClick msg
+        , checked state
+        ]
+        []
 
 
 
