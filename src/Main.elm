@@ -54,7 +54,10 @@ type alias AppParam =
 
 initialModel =
     { appName = "my_new_app"
+    , label = "My New App"
     , version = "0.0.1"
+    , shortDescription = ""
+    , longDescription = ""
     , available = True
     , checkpointable = False
     , defaultMemoryPerNode = 32
@@ -67,15 +70,12 @@ initialModel =
     , executionSystem = "tacc-stampede2-user"
     , executionType = "HPC"
     , helpURI = "http://google.com"
-    , label = "MyNewApp"
-    , longDescription = ""
-    , modules = [ "tacc-singularity", "launcher" ]
-    , ontology = [ "imicrobe" ]
     , parallelism = "SERIAL"
-    , shortDescription = ""
+    , modules = [ "tacc-singularity", "launcher" ]
+    , ontology = [ "http://sswapmeet.sswap.info/agave/apps/Application" ]
     , tags = [ "imicrobe" ]
-    , templatePath = "template.sh"
     , testPath = "test.sh"
+    , templatePath = "template.sh"
     , inputs = []
     , parameters = []
     , showJson = False
@@ -146,7 +146,7 @@ updateApp model fldName newValue =
                         _ ->
                             ( model.defaultMemoryPerNode, Just "Not a number" )
             in
-            { model | defaultMemoryPerNode = newMem }
+            { model | defaultMemoryPerNode = newMem, error = error }
 
         _ ->
             model
@@ -549,6 +549,45 @@ view model =
                     [ type_ "text"
                     , name "testPath"
                     , defaultValue model.testPath
+                    , class "form-control"
+                    ]
+                    []
+                ]
+            , div
+                [ class "form-group"
+                , onInput (UpdateApp "modules")
+                ]
+                [ Html.label [] [ text "Modules" ]
+                , Html.input
+                    [ type_ "text"
+                    , name "modules"
+                    , defaultValue (String.join ", " model.modules)
+                    , class "form-control"
+                    ]
+                    []
+                ]
+            , div
+                [ class "form-group"
+                , onInput (UpdateApp "tags")
+                ]
+                [ Html.label [] [ text "Tags" ]
+                , Html.input
+                    [ type_ "text"
+                    , name "modules"
+                    , defaultValue (String.join ", " model.tags)
+                    , class "form-control"
+                    ]
+                    []
+                ]
+            , div
+                [ class "form-group"
+                , onInput (UpdateApp "ontology")
+                ]
+                [ Html.label [] [ text "Ontology" ]
+                , Html.input
+                    [ type_ "text"
+                    , name "ontology"
+                    , defaultValue (String.join ", " model.ontology)
                     , class "form-control"
                     ]
                     []
