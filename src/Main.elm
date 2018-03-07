@@ -15,6 +15,7 @@ type alias Model =
     , checkpointable : Bool
     , inputs : List AppInput
     , parameters : List AppParam
+    , showJson : Bool
     }
 
 
@@ -35,6 +36,7 @@ initialModel =
     , checkpointable = False
     , inputs = []
     , parameters = []
+    , showJson = False
     }
 
 
@@ -49,6 +51,7 @@ init =
 
 type Msg
     = AddInput
+    | ToggleShowJson
     | UpdateApp String String
 
 
@@ -57,6 +60,9 @@ update msg model =
     case msg of
         AddInput ->
             ( model, Cmd.none )
+
+        ToggleShowJson ->
+            ( { model | showJson = not model.showJson }, Cmd.none )
 
         UpdateApp fldName newValue ->
             ( updateApp model fldName newValue, Cmd.none )
@@ -82,10 +88,42 @@ updateApp model fldName newValue =
 ---- VIEW ----
 
 
+generateJson model =
+    "{"
+        ++ "\"name\": \""
+        ++ model.appName
+        ++ "\","
+        ++ "\"version\": \""
+        ++ model.version
+        ++ "\""
+        ++ "}"
+
+
+jsonViewer model =
+    let
+        json =
+            if model.showJson then
+                generateJson model
+            else
+                ""
+
+        prompt =
+            if model.showJson then
+                "Hide"
+            else
+                "Show"
+    in
+    div []
+        [ div [ onClick ToggleShowJson ] [ text (prompt ++ " JSON") ]
+        , div [] [ text json ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     Html.form []
-        [ div [ class "form-group", onInput (UpdateApp "appName") ]
+        [ jsonViewer model
+        , div [ class "form-group", onInput (UpdateApp "appName") ]
             [ Html.label [] [ text "App Name" ]
             , Html.input
                 [ type_ "text"
