@@ -11,6 +11,8 @@ import Html.Events exposing (..)
 type alias Model =
     { appName : String
     , version : String
+    , available : Bool
+    , checkpointable : Bool
     , inputs : List AppInput
     , parameters : List AppParam
     }
@@ -29,6 +31,8 @@ type alias AppParam =
 initialModel =
     { appName = "MyNewApp"
     , version = "0.0.1"
+    , available = True
+    , checkpointable = False
     , inputs = []
     , parameters = []
     }
