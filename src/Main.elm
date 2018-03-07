@@ -217,7 +217,7 @@ viewJson model =
                                 )
                         , body =
                             Just
-                                (div [ style [ ( "overflow-y", "auto" ) ] ]
+                                (div [ style [ ( "overflow-y", "auto" ), ( "max-height", "60vh" ) ] ]
                                     [ pre [] [ text json ] ]
                                 )
                         , footer =
