@@ -42,14 +42,61 @@ type alias Model =
     }
 
 
+
+-- Cf. http://developer.agaveapi.co/#inputs-and-parameters
+
+
 type alias AppInput =
     { id : String
+    , default_value : String
+    , display_order : Int
+    , value_validator : String
+    , required : Bool
+    , visible : Bool
+    , ontology : Bool
+    , minCardinality : Int
+    , maxCardinality : Int
+    , fileTypes : List String
+    , description : String
+    , label : String
+    , argument : String
+    , repeatArgument : Bool
+    , showArgument : Bool
+    , enquote_value : Bool
     }
 
 
 type alias AppParam =
     { id : String
+    , default_value : String
+    , value_type : AppParamType
+    , display_order : Int
+    , required : Bool
+    , validator : String
+    , visible : Bool
+    , description : String
+    , label : String
+    , argument : String
+    , showArgument : Bool
+    , enquote_value : Bool
+    , minCardinality : Int
+    , maxCardinality : Int
+    , enumValues : Maybe List EnumParamValue
     }
+
+
+type alias EnumParamValue =
+    { param_key : String
+    , param_value : String
+    }
+
+
+type AppParamType
+    = StringParam
+    | NumberParam
+    | EnumerationParam
+    | BoolParam
+    | FlagParam
 
 
 initialModel =
@@ -262,7 +309,9 @@ encodeApp model =
             , ( "available", JE.bool model.available )
             , ( "checkpointable", JE.bool model.checkpointable )
             , ( "defaultMemoryPerNode", JE.int model.defaultMemoryPerNode )
-            , ( "defaultProcessorsPerNode", JE.int model.defaultProcessorsPerNode )
+            , ( "defaultProcessorsPerNode"
+              , JE.int model.defaultProcessorsPerNode
+              )
             , ( "defaultMaxRunTime", JE.string model.defaultMaxRunTime )
             , ( "defaultNodeCount", JE.int model.defaultNodeCount )
             , ( "defaultQueue", JE.string model.defaultQueue )
@@ -312,7 +361,12 @@ viewJson model =
                                 )
                         , body =
                             Just
-                                (div [ style [ ( "overflow-y", "auto" ), ( "max-height", "60vh" ) ] ]
+                                (div
+                                    [ style
+                                        [ ( "overflow-y", "auto" )
+                                        , ( "max-height", "60vh" )
+                                        ]
+                                    ]
                                     [ pre [] [ text json ] ]
                                 )
                         , footer =
@@ -352,37 +406,6 @@ viewInputs model =
                 ""
             else
                 "Some"
-
-        form =
-            Dialog.view
-                (if model.showInputForm then
-                    Just
-                        { closeMessage = Nothing
-                        , containerClass = Nothing
-                        , header = Just (text "Alert!")
-                        , body = Just (p [] [ text "Let me tell you something important..." ])
-                        , footer =
-                            Just
-                                (div
-                                    []
-                                    [ button
-                                        [ class "btn btn-primary"
-                                        , type_ "button"
-                                        , onClick ToggleInputForm
-                                        ]
-                                        [ text "Add" ]
-                                    , button
-                                        [ class "btn btn-default"
-                                        , type_ "button"
-                                        , onClick ToggleInputForm
-                                        ]
-                                        [ text "Cancel" ]
-                                    ]
-                                )
-                        }
-                 else
-                    Nothing
-                )
     in
     div [ class "form-group" ]
         [ text ("Inputs (" ++ toString numInputs ++ ")")
@@ -392,9 +415,68 @@ viewInputs model =
             , onClick ToggleInputForm
             ]
             [ text "Add Input" ]
-        , form
+        , inputDialog model
         , text inputs
         ]
+
+
+inputDialog model =
+    let
+        body =
+            div []
+                [ Html.form []
+                    [ div [ class "form-group" ]
+                        [ Html.label [] [ text "Name" ]
+                        , Html.input
+                            [ type_ "text"
+                            , name "name"
+                            , defaultValue "<NAME>"
+                            , class "form-control"
+                            ]
+                            []
+                        ]
+                    , div [ class "form-group" ]
+                        [ Html.label [] [ text "Value" ]
+                        , Html.input
+                            [ type_ "text"
+                            , name "name"
+                            , defaultValue "<VALUE>"
+                            , class "form-control"
+                            ]
+                            []
+                        ]
+                    ]
+                ]
+    in
+    Dialog.view
+        (if model.showInputForm then
+            Just
+                { closeMessage = Nothing
+                , containerClass = Nothing
+                , header = Just (text "Add Param")
+                , body = Just body
+                , footer =
+                    Just
+                        (div
+                            []
+                            [ button
+                                [ class "btn btn-primary"
+                                , type_ "button"
+                                , onClick ToggleInputForm
+                                ]
+                                [ text "Add" ]
+                            , button
+                                [ class "btn btn-default"
+                                , type_ "button"
+                                , onClick ToggleInputForm
+                                ]
+                                [ text "Cancel" ]
+                            ]
+                        )
+                }
+         else
+            Nothing
+        )
 
 
 view : Model -> Html Msg
@@ -411,7 +493,8 @@ view model =
     div []
         [ h1 [] [ text "Appetizer" ]
         , div [] [ text errorMsg ]
-        , div [] [ text (toString model) ]
+
+        -- , div [] [ text (toString model) ]
         , Html.form []
             [ div [ class "form-group", onInput UpdateAppName ]
                 [ Html.label [] [ text "App Name" ]
