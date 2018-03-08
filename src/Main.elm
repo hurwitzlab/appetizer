@@ -93,39 +93,33 @@ init =
 ---- UPDATE ----
 
 
-type FieldToUpdate
-    = AppName String
-    | Label String
-    | Version String
-    | ShortDescription String
-    | LongDescription String
-    | Available String
-    | Checkpointable String
-    | DefaultMemoryPerNode String
-    | DefaultProcessorsPerNode String
-    | DefaultMaxRunTime String
-    | DefaultNodeCount String
-    | DefaultQueue String
-    | DeploymentPath String
-    | DeploymentSystem String
-    | ExecutionSystem String
-    | ExecutionType String
-    | HelpURI String
-    | Parallelism String
-    | Modules String
-    | Ontology String
-    | Tags String
-    | TestPath String
-    | TemplatePath String
-
-
 type Msg
     = CloseJsonDialog
     | ShowJsonDialog
     | ToggleInputForm
-    | UpdateApp FieldToUpdate
     | ToggleAvailable
     | ToggleCheckpointable
+    | UpdateAppName String
+    | UpdateLabel String
+    | UpdateVersion String
+    | UpdateShortDescription String
+    | UpdateLongDescription String
+    | UpdateDefaultMemoryPerNode String
+    | UpdateDefaultProcessorsPerNode String
+    | UpdateDefaultMaxRunTime String
+    | UpdateDefaultNodeCount String
+    | UpdateDefaultQueue String
+    | UpdateDeploymentPath String
+    | UpdateDeploymentSystem String
+    | UpdateExecutionSystem String
+    | UpdateExecutionType String
+    | UpdateHelpURI String
+    | UpdateParallelism String
+    | UpdateModules String
+    | UpdateOntology String
+    | UpdateTags String
+    | UpdateTestPath String
+    | UpdateTemplatePath String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -140,59 +134,33 @@ update msg model =
         ToggleInputForm ->
             ( { model | showInputForm = not model.showInputForm }, Cmd.none )
 
-        UpdateApp fieldToUpdate ->
-            ( updateApp model fieldToUpdate, Cmd.none )
-
         ToggleAvailable ->
             ( { model | available = not model.available }, Cmd.none )
 
         ToggleCheckpointable ->
             ( { model | checkpointable = not model.checkpointable }, Cmd.none )
 
+        UpdateAppName val ->
+            ( { model | appName = val }, Cmd.none )
 
-addInput model =
-    model
+        UpdateLabel val ->
+            ( { model | label = val }, Cmd.none )
 
+        UpdateVersion val ->
+            ( { model | version = val }, Cmd.none )
 
-updateApp : Model -> FieldToUpdate -> Model
-updateApp model field =
-    case field of
-        AppName name ->
-            { model | appName = name }
+        UpdateShortDescription val ->
+            ( { model | shortDescription = val }, Cmd.none )
 
-        Label label ->
-            { model | label = label }
+        UpdateLongDescription val ->
+            ( { model | longDescription = val }, Cmd.none )
 
-        Version version ->
-            { model | version = version }
+        UpdateDefaultMaxRunTime val ->
+            ( { model | defaultMaxRunTime = val }, Cmd.none )
 
-        ShortDescription desc ->
-            { model | shortDescription = desc }
-
-        LongDescription desc ->
-            { model | longDescription = desc }
-
-        Available val ->
-            { model
-                | available =
-                    if val == "true" then
-                        True
-                    else
-                        False
-            }
-
-        Checkpointable val ->
-            { model
-                | checkpointable =
-                    if val == "true" then
-                        True
-                    else
-                        False
-            }
-
-        DefaultMemoryPerNode val ->
+        UpdateDefaultMemoryPerNode val ->
             let
-                newMem =
+                num =
                     case String.toInt val of
                         Ok n ->
                             n
@@ -200,11 +168,11 @@ updateApp model field =
                         Err _ ->
                             model.defaultMemoryPerNode
             in
-            { model | defaultMemoryPerNode = newMem }
+            ( { model | defaultMemoryPerNode = num }, Cmd.none )
 
-        DefaultProcessorsPerNode val ->
+        UpdateDefaultProcessorsPerNode val ->
             let
-                newProc =
+                num =
                     case String.toInt val of
                         Ok n ->
                             n
@@ -212,14 +180,11 @@ updateApp model field =
                         Err _ ->
                             model.defaultProcessorsPerNode
             in
-            { model | defaultProcessorsPerNode = newProc }
+            ( { model | defaultProcessorsPerNode = num }, Cmd.none )
 
-        DefaultMaxRunTime val ->
-            { model | defaultMaxRunTime = val }
-
-        DefaultNodeCount val ->
+        UpdateDefaultNodeCount val ->
             let
-                newCount =
+                num =
                     case String.toInt val of
                         Ok n ->
                             n
@@ -227,43 +192,59 @@ updateApp model field =
                         Err _ ->
                             model.defaultNodeCount
             in
-            { model | defaultNodeCount = newCount }
+            ( { model | defaultNodeCount = num }, Cmd.none )
 
-        DefaultQueue val ->
-            { model | defaultQueue = val }
+        UpdateDefaultQueue val ->
+            ( { model | defaultQueue = val }, Cmd.none )
 
-        DeploymentPath val ->
-            { model | deploymentPath = val }
+        UpdateDeploymentPath val ->
+            ( { model | deploymentPath = val }, Cmd.none )
 
-        DeploymentSystem val ->
-            { model | deploymentSystem = val }
+        UpdateDeploymentSystem val ->
+            ( { model | deploymentSystem = val }, Cmd.none )
 
-        ExecutionSystem val ->
-            { model | executionSystem = val }
+        UpdateExecutionSystem val ->
+            ( { model | executionSystem = val }, Cmd.none )
 
-        ExecutionType val ->
-            { model | executionType = val }
+        UpdateExecutionType val ->
+            ( { model | executionType = val }, Cmd.none )
 
-        HelpURI val ->
-            { model | helpURI = val }
+        UpdateHelpURI val ->
+            ( { model | helpURI = val }, Cmd.none )
 
-        Parallelism val ->
-            { model | parallelism = val }
+        UpdateParallelism val ->
+            ( { model | parallelism = val }, Cmd.none )
 
-        Modules val ->
-            { model | modules = String.split "," val }
+        UpdateModules val ->
+            ( { model
+                | modules = List.map String.trim (String.split "," val)
+              }
+            , Cmd.none
+            )
 
-        Ontology val ->
-            { model | ontology = String.split "," val }
+        UpdateOntology val ->
+            ( { model
+                | ontology = List.map String.trim (String.split "," val)
+              }
+            , Cmd.none
+            )
 
-        Tags val ->
-            { model | tags = String.split "," val }
+        UpdateTags val ->
+            ( { model
+                | tags = List.map String.trim (String.split "," val)
+              }
+            , Cmd.none
+            )
 
-        TestPath val ->
-            { model | testPath = val }
+        UpdateTestPath val ->
+            ( { model | testPath = val }, Cmd.none )
 
-        TemplatePath val ->
-            { model | templatePath = val }
+        UpdateTemplatePath val ->
+            ( { model | templatePath = val }, Cmd.none )
+
+
+addInput model =
+    model
 
 
 
@@ -430,8 +411,9 @@ view model =
     div []
         [ h1 [] [ text "Appetizer" ]
         , div [] [ text errorMsg ]
+        , div [] [ text (toString model) ]
         , Html.form []
-            [ div [ class "form-group", onInput (UpdateApp AppName) ]
+            [ div [ class "form-group", onInput UpdateAppName ]
                 [ Html.label [] [ text "App Name" ]
                 , Html.input
                     [ type_ "text"
@@ -443,7 +425,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp Label)
+                , onInput UpdateLabel
                 ]
                 [ Html.label [] [ text "Label" ]
                 , Html.input
@@ -454,7 +436,7 @@ view model =
                     ]
                     []
                 ]
-            , div [ class "form-group", onInput (UpdateApp Version) ]
+            , div [ class "form-group", onInput UpdateVersion ]
                 [ Html.label [] [ text "Version" ]
                 , Html.input
                     [ type_ "text"
@@ -466,7 +448,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp ShortDescription)
+                , onInput UpdateShortDescription
                 ]
                 [ Html.label [] [ text "Short Description" ]
                 , Html.input
@@ -479,7 +461,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp LongDescription)
+                , onInput UpdateLongDescription
                 ]
                 [ Html.label [] [ text "Long Description" ]
                 , Html.input
@@ -500,7 +482,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp DefaultMemoryPerNode)
+                , onInput UpdateDefaultMemoryPerNode
                 ]
                 [ Html.label [] [ text "Default Memory Per Node" ]
                 , Html.input
@@ -513,7 +495,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp DefaultProcessorsPerNode)
+                , onInput UpdateDefaultProcessorsPerNode
                 ]
                 [ Html.label [] [ text "Default Processors Per Node" ]
                 , Html.input
@@ -526,7 +508,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp DefaultMaxRunTime)
+                , onInput UpdateDefaultMaxRunTime
                 ]
                 [ Html.label [] [ text "Default Max Run Time" ]
                 , Html.input
@@ -539,7 +521,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp DefaultNodeCount)
+                , onInput UpdateDefaultNodeCount
                 ]
                 [ Html.label [] [ text "Default Node Count" ]
                 , Html.input
@@ -552,7 +534,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp DefaultQueue)
+                , onInput UpdateDefaultQueue
                 ]
                 [ Html.label [] [ text "Default Queue" ]
                 , Html.input
@@ -565,7 +547,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp DeploymentPath)
+                , onInput UpdateDeploymentPath
                 ]
                 [ Html.label [] [ text "Deployment Path" ]
                 , Html.input
@@ -578,7 +560,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp DeploymentSystem)
+                , onInput UpdateDeploymentSystem
                 ]
                 [ Html.label [] [ text "Deployment System" ]
                 , Html.input
@@ -591,7 +573,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp ExecutionSystem)
+                , onInput UpdateExecutionSystem
                 ]
                 [ Html.label [] [ text "Execution System" ]
                 , Html.input
@@ -604,7 +586,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp ExecutionType)
+                , onInput UpdateExecutionType
                 ]
                 [ Html.label [] [ text "Execution Type" ]
                 , Html.input
@@ -617,7 +599,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp HelpURI)
+                , onInput UpdateHelpURI
                 ]
                 [ Html.label [] [ text "Help URI" ]
                 , Html.input
@@ -630,7 +612,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp Parallelism)
+                , onInput UpdateParallelism
                 ]
                 [ Html.label [] [ text "Parallelism" ]
                 , Html.input
@@ -643,7 +625,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp TemplatePath)
+                , onInput UpdateTemplatePath
                 ]
                 [ Html.label [] [ text "Template Path" ]
                 , Html.input
@@ -656,7 +638,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp TestPath)
+                , onInput UpdateTestPath
                 ]
                 [ Html.label [] [ text "Test Path" ]
                 , Html.input
@@ -669,7 +651,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp Modules)
+                , onInput UpdateModules
                 ]
                 [ Html.label [] [ text "Modules" ]
                 , Html.input
@@ -682,7 +664,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp Tags)
+                , onInput UpdateTags
                 ]
                 [ Html.label [] [ text "Tags" ]
                 , Html.input
@@ -695,7 +677,7 @@ view model =
                 ]
             , div
                 [ class "form-group"
-                , onInput (UpdateApp Ontology)
+                , onInput UpdateOntology
                 ]
                 [ Html.label [] [ text "Ontology" ]
                 , Html.input
