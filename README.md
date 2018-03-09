@@ -17,5 +17,5 @@ $ sudo npm install --unsafe-perm -g elm
 $ sudo npm install --unsafe-perm -g elm-live
 $ sudo npm install --unsafe-perm -g elm-format
 $ sudo npm install
-$ sudo npm start
+$ npm start
 ```
