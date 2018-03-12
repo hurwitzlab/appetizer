@@ -331,58 +331,50 @@ encodeApp model =
         )
 
 
-viewJson model =
+viewJsonDialog model =
     let
         json =
-            if model.showJson then
-                encodeApp model
-            else
-                ""
-
-        prompt =
-            if model.showJson then
-                "Hide"
-            else
-                "Show"
-
-        dialog =
-            Dialog.view
-                (if model.showJson then
-                    Just
-                        { closeMessage = Nothing
-                        , containerClass = Nothing
-                        , header =
-                            Just
-                                (text
-                                    (model.appName
-                                        ++ "-"
-                                        ++ model.version
-                                    )
-                                )
-                        , body =
-                            Just
-                                (div
-                                    [ style
-                                        [ ( "overflow-y", "auto" )
-                                        , ( "max-height", "60vh" )
-                                        ]
-                                    ]
-                                    [ pre [] [ text json ] ]
-                                )
-                        , footer =
-                            Just
-                                (button
-                                    [ class "btn btn-default"
-                                    , type_ "button"
-                                    , onClick CloseJsonDialog
-                                    ]
-                                    [ text "OK" ]
-                                )
-                        }
-                 else
-                    Nothing
-                )
+            encodeApp model
     in
+    Dialog.view
+        (if model.showJson then
+            Just
+                { closeMessage = Nothing
+                , containerClass = Nothing
+                , header =
+                    Just
+                        (text
+                            (model.appName
+                                ++ "-"
+                                ++ model.version
+                            )
+                        )
+                , body =
+                    Just
+                        (div
+                            [ style
+                                [ ( "overflow-y", "auto" )
+                                , ( "max-height", "60vh" )
+                                ]
+                            ]
+                            [ pre [] [ text json ] ]
+                        )
+                , footer =
+                    Just
+                        (button
+                            [ class "btn btn-default"
+                            , type_ "button"
+                            , onClick CloseJsonDialog
+                            ]
+                            [ text "OK" ]
+                        )
+                }
+         else
+            Nothing
+        )
+
+
+viewJson model =
     div []
         [ div []
             [ button
@@ -392,7 +384,7 @@ viewJson model =
                 ]
                 [ text "Show JSON" ]
             ]
-        , dialog
+        , viewJsonDialog model
         ]
 
 
@@ -422,30 +414,25 @@ viewInputs model =
 
 inputDialog model =
     let
-        body =
-            div []
-                [ Html.form []
-                    [ div [ class "form-group" ]
-                        [ Html.label [] [ text "Name" ]
-                        , Html.input
-                            [ type_ "text"
-                            , name "name"
-                            , defaultValue "<NAME>"
-                            , class "form-control"
-                            ]
-                            []
+        mkTr name defaultVal =
+            tr []
+                [ th [] [ text name ]
+                , td []
+                    [ Html.input
+                        [ type_ "text"
+                        , defaultValue defaultVal
+                        , class "form-control"
                         ]
-                    , div [ class "form-group" ]
-                        [ Html.label [] [ text "Value" ]
-                        , Html.input
-                            [ type_ "text"
-                            , name "name"
-                            , defaultValue "<VALUE>"
-                            , class "form-control"
-                            ]
-                            []
-                        ]
+                        []
                     ]
+                ]
+
+        tbl =
+            table []
+                [ mkTr "Name" ""
+                , mkTr "Value" ""
+                , mkTr "Display Order" "1"
+                , mkTr "Validator" ""
                 ]
     in
     Dialog.view
@@ -454,7 +441,7 @@ inputDialog model =
                 { closeMessage = Nothing
                 , containerClass = Nothing
                 , header = Just (text "Add Param")
-                , body = Just body
+                , body = Just tbl
                 , footer =
                     Just
                         (div
@@ -489,301 +476,79 @@ view model =
 
                 _ ->
                     ""
+
+        mkTh label =
+            th [ style [ ( "align", "right" ) ] ] [ text label ]
+
+        textEntry label defValue msg =
+            tr []
+                [ mkTh label
+                , td []
+                    [ input
+                        [ type_ "text"
+                        , defaultValue defValue
+                        , class "form-control"
+                        , onInput msg
+                        , size 60
+                        ]
+                        []
+                    ]
+                ]
+
+        checkbox label msg state =
+            tr []
+                [ mkTh label
+                , td []
+                    [ input
+                        [ type_ "checkbox"
+                        , onClick msg
+                        , checked state
+                        , class "form-control"
+                        ]
+                        []
+                    ]
+                ]
     in
     div []
         [ h1 [] [ text "Appetizer" ]
-        , div [] [ text errorMsg ]
-
-        -- , div [] [ text (toString model) ]
-        , Html.form []
-            [ div [ class "form-group", onInput UpdateAppName ]
-                [ Html.label [] [ text "App Name" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "appName"
-                    , defaultValue model.appName
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateLabel
-                ]
-                [ Html.label [] [ text "Label" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "label"
-                    , defaultValue model.label
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div [ class "form-group", onInput UpdateVersion ]
-                [ Html.label [] [ text "Version" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "version"
-                    , defaultValue model.version
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateShortDescription
-                ]
-                [ Html.label [] [ text "Short Description" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "label"
-                    , defaultValue model.shortDescription
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateLongDescription
-                ]
-                [ Html.label [] [ text "Long Description" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "label"
-                    , defaultValue model.longDescription
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div [ class "form-group" ]
-                [ Html.label [] [ text "Available" ]
-                , checkbox ToggleAvailable model.available
-                ]
-            , div [ class "form-group" ]
-                [ Html.label [] [ text "Checkpointable" ]
-                , checkbox ToggleCheckpointable model.checkpointable
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateDefaultMemoryPerNode
-                ]
-                [ Html.label [] [ text "Default Memory Per Node" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "defaultMemoryPerNode"
-                    , defaultValue (toString model.defaultMemoryPerNode)
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateDefaultProcessorsPerNode
-                ]
-                [ Html.label [] [ text "Default Processors Per Node" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "defaultProcessorsPerNode"
-                    , defaultValue (toString model.defaultProcessorsPerNode)
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateDefaultMaxRunTime
-                ]
-                [ Html.label [] [ text "Default Max Run Time" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "defaultMaxRunTime"
-                    , defaultValue model.defaultMaxRunTime
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateDefaultNodeCount
-                ]
-                [ Html.label [] [ text "Default Node Count" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "defaultNodeCount"
-                    , defaultValue (toString model.defaultNodeCount)
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateDefaultQueue
-                ]
-                [ Html.label [] [ text "Default Queue" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "defaultQueue"
-                    , defaultValue model.defaultQueue
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateDeploymentPath
-                ]
-                [ Html.label [] [ text "Deployment Path" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "defaultQueue"
-                    , defaultValue model.deploymentPath
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateDeploymentSystem
-                ]
-                [ Html.label [] [ text "Deployment System" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "deploymentSystem"
-                    , defaultValue model.deploymentSystem
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateExecutionSystem
-                ]
-                [ Html.label [] [ text "Execution System" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "executionSystem"
-                    , defaultValue model.executionSystem
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateExecutionType
-                ]
-                [ Html.label [] [ text "Execution Type" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "executionType"
-                    , defaultValue model.executionType
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateHelpURI
-                ]
-                [ Html.label [] [ text "Help URI" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "helpURI"
-                    , defaultValue model.helpURI
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateParallelism
-                ]
-                [ Html.label [] [ text "Parallelism" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "parallelism"
-                    , defaultValue model.parallelism
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateTemplatePath
-                ]
-                [ Html.label [] [ text "Template Path" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "templatePath"
-                    , defaultValue model.templatePath
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateTestPath
-                ]
-                [ Html.label [] [ text "Test Path" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "testPath"
-                    , defaultValue model.testPath
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateModules
-                ]
-                [ Html.label [] [ text "Modules" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "modules"
-                    , defaultValue (String.join ", " model.modules)
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateTags
-                ]
-                [ Html.label [] [ text "Tags" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "modules"
-                    , defaultValue (String.join ", " model.tags)
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div
-                [ class "form-group"
-                , onInput UpdateOntology
-                ]
-                [ Html.label [] [ text "Ontology" ]
-                , Html.input
-                    [ type_ "text"
-                    , name "ontology"
-                    , defaultValue (String.join ", " model.ontology)
-                    , class "form-control"
-                    ]
-                    []
-                ]
-            , div [ class "form-group" ]
-                [ Html.label []
-                    [ text
-                        ("Inputs ("
-                            ++ toString (List.length model.inputs)
-                            ++ ")"
-                        )
-                    ]
-                ]
-            , viewInputs model
-            ]
         , viewJson model
+        , div [] [ text errorMsg ]
+        , Html.form []
+            [ table []
+                [ textEntry "Name" model.appName UpdateAppName
+                , textEntry "Label" model.label UpdateLabel
+                , textEntry "Version" model.version UpdateVersion
+                , textEntry "Short Description" model.shortDescription UpdateShortDescription
+                , textEntry "Long Description" model.longDescription UpdateLongDescription
+                , checkbox "Available" ToggleAvailable model.available
+                , checkbox "Checkpointable" ToggleCheckpointable model.checkpointable
+                , textEntry "Default Memory Per Node" (toString model.defaultMemoryPerNode) UpdateDefaultMemoryPerNode
+                , textEntry "Default Processors Per Node" (toString model.defaultProcessorsPerNode) UpdateDefaultProcessorsPerNode
+                , textEntry "Default Max Run Time" model.defaultMaxRunTime UpdateDefaultMaxRunTime
+                , textEntry "Default Node Count" (toString model.defaultNodeCount) UpdateDefaultNodeCount
+                , textEntry "Default Queue" model.defaultQueue UpdateDefaultQueue
+                , textEntry "Deployment Path" model.deploymentPath UpdateDeploymentPath
+                , textEntry "Deployment System" model.deploymentSystem UpdateDeploymentSystem
+                , textEntry "Execution System" model.executionSystem UpdateExecutionSystem
+                , textEntry "Execution Type" model.executionType UpdateExecutionType
+                , textEntry "Help URI" model.helpURI UpdateHelpURI
+                , textEntry "Parallelism" model.parallelism UpdateParallelism
+                , textEntry "Template Path" model.templatePath UpdateTemplatePath
+                , textEntry "Test Path" model.testPath UpdateTestPath
+                , textEntry "Modules" (String.join ", " model.modules) UpdateModules
+                , textEntry "Tags" (String.join ", " model.tags) UpdateTags
+                , textEntry "Ontology" (String.join ", " model.ontology) UpdateOntology
+                ]
+            ]
+        , viewInputs model
         ]
+
+
+
+{--
+            ]
+        ]
+        --}
 
 
 showInputs : List AppInput -> Html msg
@@ -794,17 +559,6 @@ showInputs inputs =
 
         _ ->
             text "Not none"
-
-
-checkbox : msg -> Bool -> Html msg
-checkbox msg state =
-    Html.input
-        [ type_ "checkbox"
-        , onClick msg
-        , checked state
-        , class "form-control"
-        ]
-        []
 
 
 
