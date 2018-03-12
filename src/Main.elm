@@ -29,7 +29,7 @@ type alias Model =
     , longDescription : String
     , modules : List String
     , ontology : List String
-    , parallelism : String
+    , parallelism : Parallelism
     , shortDescription : String
     , tags : List String
     , templatePath : String
@@ -99,6 +99,11 @@ type AppParamType
     | FlagParam
 
 
+type Parallelism
+    = Serial
+    | Parallel
+
+
 initialModel =
     { appName = "my_new_app"
     , label = "My New App"
@@ -117,7 +122,7 @@ initialModel =
     , executionSystem = "tacc-stampede2-user"
     , executionType = "HPC"
     , helpURI = "http://google.com"
-    , parallelism = "SERIAL"
+    , parallelism = Serial
     , modules = [ "tacc-singularity", "launcher" ]
     , ontology = [ "http://sswapmeet.sswap.info/agave/apps/Application" ]
     , tags = [ "imicrobe" ]
@@ -161,7 +166,7 @@ type Msg
     | UpdateExecutionSystem String
     | UpdateExecutionType String
     | UpdateHelpURI String
-    | UpdateParallelism String
+    | UpdateParallelism Parallelism
     | UpdateModules String
     | UpdateOntology String
     | UpdateTags String
@@ -321,7 +326,7 @@ encodeApp model =
             , ( "executionType", JE.string model.executionType )
             , ( "helpURI", JE.string model.helpURI )
             , ( "label", JE.string model.label )
-            , ( "parallelism", JE.string model.parallelism )
+            , ( "parallelism", JE.string (if model.parallelism == Serial then "SERIAL" else "PARALLEL") )
             , ( "templatePath", JE.string model.templatePath )
             , ( "testPath", JE.string model.testPath )
             , ( "modules", JE.list (List.map JE.string model.modules) )
@@ -508,6 +513,26 @@ view model =
                         []
                     ]
                 ]
+
+        radioButtonGroup label options =
+            tr []
+                [ mkTh label
+                , td []
+                    [ fieldset [] (List.map radio options) ]
+                ]
+
+        radio (value, state, msg) =
+            label []
+                [ input
+                    [ type_ "radio"
+                    , onClick msg
+                    , checked state
+                    , class "form-control"
+                    ]
+                    []
+                , text value
+                ]
+
     in
     div []
         [ h1 [] [ text "Appetizer" ]
@@ -532,7 +557,12 @@ view model =
                 , textEntry "Execution System" model.executionSystem UpdateExecutionSystem
                 , textEntry "Execution Type" model.executionType UpdateExecutionType
                 , textEntry "Help URI" model.helpURI UpdateHelpURI
-                , textEntry "Parallelism" model.parallelism UpdateParallelism
+                --, textEntry "Parallelism" model.parallelism UpdateParallelism
+                --, radioButtonGroup "Parallelism"
+                , radioButtonGroup "Parallelism"
+                    [ ("Serial", (model.parallelism == Serial), (UpdateParallelism Serial))
+                    , ("Parallel", (model.parallelism == Parallel), (UpdateParallelism Parallel))
+                    ]
                 , textEntry "Template Path" model.templatePath UpdateTemplatePath
                 , textEntry "Test Path" model.testPath UpdateTestPath
                 , textEntry "Modules" (String.join ", " model.modules) UpdateModules
