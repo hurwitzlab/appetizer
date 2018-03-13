@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Encode as JE
+import Bootstrap.Tab as Tab
 
 
 ---- MODEL ----
@@ -29,7 +30,7 @@ type alias Model =
     , longDescription : String
     , modules : List String
     , ontology : List String
-    , parallelism : String
+    , parallelism : Parallelism
     , shortDescription : String
     , tags : List String
     , templatePath : String
@@ -39,6 +40,7 @@ type alias Model =
     , showJson : Bool
     , showInputForm : Bool
     , error : Maybe String
+    , tabState : Tab.State
     }
 
 
@@ -99,6 +101,11 @@ type AppParamType
     | FlagParam
 
 
+type Parallelism
+    = Serial
+    | Parallel
+
+
 initialModel =
     { appName = "my_new_app"
     , label = "My New App"
@@ -117,7 +124,7 @@ initialModel =
     , executionSystem = "tacc-stampede2-user"
     , executionType = "HPC"
     , helpURI = "http://google.com"
-    , parallelism = "SERIAL"
+    , parallelism = Serial
     , modules = [ "tacc-singularity", "launcher" ]
     , ontology = [ "http://sswapmeet.sswap.info/agave/apps/Application" ]
     , tags = [ "imicrobe" ]
@@ -128,6 +135,7 @@ initialModel =
     , showJson = False
     , showInputForm = False
     , error = Nothing
+    , tabState = Tab.initialState
     }
 
 
@@ -161,17 +169,23 @@ type Msg
     | UpdateExecutionSystem String
     | UpdateExecutionType String
     | UpdateHelpURI String
-    | UpdateParallelism String
+    | UpdateParallelism Parallelism
     | UpdateModules String
     | UpdateOntology String
     | UpdateTags String
     | UpdateTestPath String
     | UpdateTemplatePath String
+    | TabMsg Tab.State
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        TabMsg state ->
+            ( { model | tabState = state }
+            , Cmd.none
+            )
+
         CloseJsonDialog ->
             ( { model | showJson = False }, Cmd.none )
 
@@ -215,7 +229,7 @@ update msg model =
                         Err _ ->
                             model.defaultMemoryPerNode
             in
-            ( { model | defaultMemoryPerNode = num }, Cmd.none )
+                ( { model | defaultMemoryPerNode = num }, Cmd.none )
 
         UpdateDefaultProcessorsPerNode val ->
             let
@@ -227,7 +241,7 @@ update msg model =
                         Err _ ->
                             model.defaultProcessorsPerNode
             in
-            ( { model | defaultProcessorsPerNode = num }, Cmd.none )
+                ( { model | defaultProcessorsPerNode = num }, Cmd.none )
 
         UpdateDefaultNodeCount val ->
             let
@@ -239,7 +253,7 @@ update msg model =
                         Err _ ->
                             model.defaultNodeCount
             in
-            ( { model | defaultNodeCount = num }, Cmd.none )
+                ( { model | defaultNodeCount = num }, Cmd.none )
 
         UpdateDefaultQueue val ->
             ( { model | defaultQueue = val }, Cmd.none )
@@ -321,7 +335,14 @@ encodeApp model =
             , ( "executionType", JE.string model.executionType )
             , ( "helpURI", JE.string model.helpURI )
             , ( "label", JE.string model.label )
-            , ( "parallelism", JE.string model.parallelism )
+            , ( "parallelism"
+              , JE.string
+                    (if model.parallelism == Serial then
+                        "SERIAL"
+                     else
+                        "PARALLEL"
+                    )
+              )
             , ( "templatePath", JE.string model.templatePath )
             , ( "testPath", JE.string model.testPath )
             , ( "modules", JE.list (List.map JE.string model.modules) )
@@ -336,42 +357,42 @@ viewJsonDialog model =
         json =
             encodeApp model
     in
-    Dialog.view
-        (if model.showJson then
-            Just
-                { closeMessage = Nothing
-                , containerClass = Nothing
-                , header =
-                    Just
-                        (text
-                            (model.appName
-                                ++ "-"
-                                ++ model.version
+        Dialog.view
+            (if model.showJson then
+                Just
+                    { closeMessage = Nothing
+                    , containerClass = Nothing
+                    , header =
+                        Just
+                            (text
+                                (model.appName
+                                    ++ "-"
+                                    ++ model.version
+                                )
                             )
-                        )
-                , body =
-                    Just
-                        (div
-                            [ style
-                                [ ( "overflow-y", "auto" )
-                                , ( "max-height", "60vh" )
+                    , body =
+                        Just
+                            (div
+                                [ style
+                                    [ ( "overflow-y", "auto" )
+                                    , ( "max-height", "60vh" )
+                                    ]
                                 ]
-                            ]
-                            [ pre [] [ text json ] ]
-                        )
-                , footer =
-                    Just
-                        (button
-                            [ class "btn btn-default"
-                            , type_ "button"
-                            , onClick CloseJsonDialog
-                            ]
-                            [ text "OK" ]
-                        )
-                }
-         else
-            Nothing
-        )
+                                [ pre [] [ text json ] ]
+                            )
+                    , footer =
+                        Just
+                            (button
+                                [ class "btn btn-default"
+                                , type_ "button"
+                                , onClick CloseJsonDialog
+                                ]
+                                [ text "OK" ]
+                            )
+                    }
+             else
+                Nothing
+            )
 
 
 viewJson model =
@@ -399,17 +420,17 @@ viewInputs model =
             else
                 "Some"
     in
-    div [ class "form-group" ]
-        [ text ("Inputs (" ++ toString numInputs ++ ")")
-        , button
-            [ type_ "button"
-            , class "btn btn-default"
-            , onClick ToggleInputForm
+        div [ class "form-group" ]
+            [ text ("Inputs (" ++ toString numInputs ++ ")")
+            , button
+                [ type_ "button"
+                , class "btn btn-default"
+                , onClick ToggleInputForm
+                ]
+                [ text "Add Input" ]
+            , inputDialog model
+            , text inputs
             ]
-            [ text "Add Input" ]
-        , inputDialog model
-        , text inputs
-        ]
 
 
 inputDialog model =
@@ -435,35 +456,35 @@ inputDialog model =
                 , mkTr "Validator" ""
                 ]
     in
-    Dialog.view
-        (if model.showInputForm then
-            Just
-                { closeMessage = Nothing
-                , containerClass = Nothing
-                , header = Just (text "Add Param")
-                , body = Just tbl
-                , footer =
-                    Just
-                        (div
-                            []
-                            [ button
-                                [ class "btn btn-primary"
-                                , type_ "button"
-                                , onClick ToggleInputForm
+        Dialog.view
+            (if model.showInputForm then
+                Just
+                    { closeMessage = Nothing
+                    , containerClass = Nothing
+                    , header = Just (text "Add Param")
+                    , body = Just tbl
+                    , footer =
+                        Just
+                            (div
+                                []
+                                [ button
+                                    [ class "btn btn-primary"
+                                    , type_ "button"
+                                    , onClick ToggleInputForm
+                                    ]
+                                    [ text "Add" ]
+                                , button
+                                    [ class "btn btn-default"
+                                    , type_ "button"
+                                    , onClick ToggleInputForm
+                                    ]
+                                    [ text "Cancel" ]
                                 ]
-                                [ text "Add" ]
-                            , button
-                                [ class "btn btn-default"
-                                , type_ "button"
-                                , onClick ToggleInputForm
-                                ]
-                                [ text "Cancel" ]
-                            ]
-                        )
-                }
-         else
-            Nothing
-        )
+                            )
+                    }
+             else
+                Nothing
+            )
 
 
 view : Model -> Html Msg
@@ -508,40 +529,65 @@ view model =
                         []
                     ]
                 ]
-    in
-    div []
-        [ h1 [] [ text "Appetizer" ]
-        , viewJson model
-        , div [] [ text errorMsg ]
-        , Html.form []
-            [ table []
-                [ textEntry "Name" model.appName UpdateAppName
-                , textEntry "Label" model.label UpdateLabel
-                , textEntry "Version" model.version UpdateVersion
-                , textEntry "Short Description" model.shortDescription UpdateShortDescription
-                , textEntry "Long Description" model.longDescription UpdateLongDescription
-                , checkbox "Available" ToggleAvailable model.available
-                , checkbox "Checkpointable" ToggleCheckpointable model.checkpointable
-                , textEntry "Default Memory Per Node" (toString model.defaultMemoryPerNode) UpdateDefaultMemoryPerNode
-                , textEntry "Default Processors Per Node" (toString model.defaultProcessorsPerNode) UpdateDefaultProcessorsPerNode
-                , textEntry "Default Max Run Time" model.defaultMaxRunTime UpdateDefaultMaxRunTime
-                , textEntry "Default Node Count" (toString model.defaultNodeCount) UpdateDefaultNodeCount
-                , textEntry "Default Queue" model.defaultQueue UpdateDefaultQueue
-                , textEntry "Deployment Path" model.deploymentPath UpdateDeploymentPath
-                , textEntry "Deployment System" model.deploymentSystem UpdateDeploymentSystem
-                , textEntry "Execution System" model.executionSystem UpdateExecutionSystem
-                , textEntry "Execution Type" model.executionType UpdateExecutionType
-                , textEntry "Help URI" model.helpURI UpdateHelpURI
-                , textEntry "Parallelism" model.parallelism UpdateParallelism
-                , textEntry "Template Path" model.templatePath UpdateTemplatePath
-                , textEntry "Test Path" model.testPath UpdateTestPath
-                , textEntry "Modules" (String.join ", " model.modules) UpdateModules
-                , textEntry "Tags" (String.join ", " model.tags) UpdateTags
-                , textEntry "Ontology" (String.join ", " model.ontology) UpdateOntology
+
+        radioButtonGroup label options =
+            tr []
+                [ mkTh label
+                , td []
+                    [ fieldset [] (List.map radio options) ]
                 ]
+
+        radio ( value, state, msg ) =
+            label []
+                [ input
+                    [ type_ "radio"
+                    , onClick msg
+                    , checked state
+                    , class "form-control"
+                    ]
+                    []
+                , text value
+                ]
+    in
+        div []
+            [ h1 [] [ text "Appetizer" ]
+            , viewJson model
+            , div [] [ text errorMsg ]
+            , Html.form []
+                [ table []
+                    [ textEntry "Name" model.appName UpdateAppName
+                    , textEntry "Label" model.label UpdateLabel
+                    , textEntry "Version" model.version UpdateVersion
+                    , textEntry "Short Description" model.shortDescription UpdateShortDescription
+                    , textEntry "Long Description" model.longDescription UpdateLongDescription
+                    , checkbox "Available" ToggleAvailable model.available
+                    , checkbox "Checkpointable" ToggleCheckpointable model.checkpointable
+                    , textEntry "Default Memory Per Node" (toString model.defaultMemoryPerNode) UpdateDefaultMemoryPerNode
+                    , textEntry "Default Processors Per Node" (toString model.defaultProcessorsPerNode) UpdateDefaultProcessorsPerNode
+                    , textEntry "Default Max Run Time" model.defaultMaxRunTime UpdateDefaultMaxRunTime
+                    , textEntry "Default Node Count" (toString model.defaultNodeCount) UpdateDefaultNodeCount
+                    , textEntry "Default Queue" model.defaultQueue UpdateDefaultQueue
+                    , textEntry "Deployment Path" model.deploymentPath UpdateDeploymentPath
+                    , textEntry "Deployment System" model.deploymentSystem UpdateDeploymentSystem
+                    , textEntry "Execution System" model.executionSystem UpdateExecutionSystem
+                    , textEntry "Execution Type" model.executionType UpdateExecutionType
+                    , textEntry "Help URI" model.helpURI UpdateHelpURI
+
+                    --, textEntry "Parallelism" model.parallelism UpdateParallelism
+                    --, radioButtonGroup "Parallelism"
+                    , radioButtonGroup "Parallelism"
+                        [ ( "Serial", (model.parallelism == Serial), (UpdateParallelism Serial) )
+                        , ( "Parallel", (model.parallelism == Parallel), (UpdateParallelism Parallel) )
+                        ]
+                    , textEntry "Template Path" model.templatePath UpdateTemplatePath
+                    , textEntry "Test Path" model.testPath UpdateTestPath
+                    , textEntry "Modules" (String.join ", " model.modules) UpdateModules
+                    , textEntry "Tags" (String.join ", " model.tags) UpdateTags
+                    , textEntry "Ontology" (String.join ", " model.ontology) UpdateOntology
+                    ]
+                ]
+            , viewInputs model
             ]
-        , viewInputs model
-        ]
 
 
 
