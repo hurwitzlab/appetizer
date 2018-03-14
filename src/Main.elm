@@ -172,14 +172,21 @@ init =
 
 
 type Msg
-    = AddInput
+    = NoOp String
+    | AddInput
     | CloseJsonDialog
+    | CloseInputDialog
     | ShowInputDialog Int
     | ShowJsonDialog
     | TabMsg Tab.State
+    | ToggleAppInputRequired Int
+    | ToggleAppInputVisible Int
     | ToggleAvailable
     | ToggleCheckpointable
-      -- | ToggleInputForm
+    | UpdateAppInputDefaultValue Int String
+    | UpdateAppInputDisplayOrder Int String
+    | UpdateAppInputId Int String
+    | UpdateAppInputOntology Int String
     | UpdateAppName String
     | UpdateDefaultMaxRunTime String
     | UpdateDefaultMemoryPerNode String
@@ -206,6 +213,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp val ->
+            ( model, Cmd.none )
+
         AddInput ->
             let
                 newId =
@@ -218,7 +228,8 @@ update msg model =
 
                 insertInput =
                     { initialInput
-                        | displayOrder =
+                        | id = "INPUT" ++ toString newId
+                        , displayOrder =
                             List.length (Dict.keys model.inputs) + 1
                     }
             in
@@ -227,6 +238,9 @@ update msg model =
               }
             , Cmd.none
             )
+
+        CloseInputDialog ->
+            ( { model | editingInputId = Nothing }, Cmd.none )
 
         CloseJsonDialog ->
             ( { model | showJson = False }, Cmd.none )
@@ -243,16 +257,54 @@ update msg model =
             , Cmd.none
             )
 
+        ToggleAppInputRequired inputId ->
+            let
+                newInputs =
+                    toggleAppInputRequired model.inputs inputId
+            in
+            ( { model | inputs = newInputs }, Cmd.none )
+
+        ToggleAppInputVisible inputId ->
+            let
+                newInputs =
+                    toggleAppInputVisible model.inputs inputId
+            in
+            ( { model | inputs = newInputs }, Cmd.none )
+
         ToggleAvailable ->
             ( { model | available = not model.available }, Cmd.none )
 
         ToggleCheckpointable ->
             ( { model | checkpointable = not model.checkpointable }, Cmd.none )
 
-        {--
-        ToggleInputForm ->
-            ( { model | editingInputId = Nothing }, Cmd.none )
-            --}
+        UpdateAppInputDefaultValue inputId val ->
+            let
+                newInputs =
+                    updateAppInputDefaultValue model.inputs inputId val
+            in
+            ( { model | inputs = newInputs }, Cmd.none )
+
+        UpdateAppInputDisplayOrder inputId val ->
+            let
+                newInputs =
+                    updateAppInputDisplayOrder model.inputs inputId val
+            in
+            ( { model | inputs = newInputs }, Cmd.none )
+
+        UpdateAppInputId inputId val ->
+            let
+                newInputs =
+                    updateAppInputId model.inputs inputId val
+            in
+            ( { model | inputs = newInputs }, Cmd.none )
+
+        UpdateAppInputOntology inputId val ->
+            let
+                newInputs =
+                    updateAppInputOntology model.inputs inputId val
+            in
+            ( { model | inputs = newInputs }, Cmd.none )
+
         UpdateAppName val ->
             ( { model | appName = val }, Cmd.none )
 
@@ -360,12 +412,140 @@ addInput model =
     model
 
 
+updateAppInputId currentInputs inputId val =
+    let
+        update v =
+            case v of
+                Nothing ->
+                    Nothing
+
+                Just input ->
+                    Just { input | id = val }
+    in
+    Dict.update inputId update currentInputs
+
+
+updateAppInputDisplayOrder currentInputs inputId val =
+    let
+        update new v =
+            case v of
+                Nothing ->
+                    Nothing
+
+                Just input ->
+                    Just { input | displayOrder = new }
+
+        _ =
+            Debug.log "method" "updateAppInputDisplayOrder"
+
+        _ =
+            Debug.log "inputId" inputId
+
+        _ =
+            Debug.log "val" val
+    in
+    case String.toInt val of
+        Ok n ->
+            Dict.update inputId (update n) currentInputs
+
+        _ ->
+            currentInputs
+
+
+updateAppInputDefaultValue currentInputs inputId val =
+    let
+        update v =
+            case v of
+                Nothing ->
+                    Nothing
+
+                Just input ->
+                    Just { input | defaultValue = val }
+    in
+    Dict.update inputId update currentInputs
+
+
+updateAppInputOntology currentInputs inputId val =
+    let
+        newOntology =
+            List.map String.trim (String.split "," val)
+
+        update v =
+            case v of
+                Nothing ->
+                    Nothing
+
+                Just input ->
+                    Just { input | ontology = newOntology }
+    in
+    Dict.update inputId update currentInputs
+
+
+toggleAppInputRequired currentInputs inputId =
+    let
+        update v =
+            case v of
+                Nothing ->
+                    Nothing
+
+                Just input ->
+                    Just { input | required = not input.required }
+    in
+    Dict.update inputId update currentInputs
+
+
+toggleAppInputVisible currentInputs inputId =
+    let
+        update v =
+            case v of
+                Nothing ->
+                    Nothing
+
+                Just input ->
+                    Just { input | visible = not input.visible }
+    in
+    Dict.update inputId update currentInputs
+
+
 
 ---- VIEW ----
 
 
 encodeApp : Model -> String
 encodeApp model =
+    let
+        encodeInput input =
+            JE.object
+                [ ( "id", JE.string input.id )
+                , ( "value"
+                  , JE.object
+                        [ ( "default", JE.string input.defaultValue )
+                        , ( "order", JE.int input.displayOrder )
+                        , ( "validator", JE.string input.validator )
+                        , ( "required", JE.bool input.required )
+                        , ( "visible", JE.bool input.visible )
+                        , ( "enquote", JE.bool input.enquoteValue )
+                        ]
+                  )
+                , ( "semantics"
+                  , JE.object
+                        [ ( "ontology", JE.list (List.map JE.string input.ontology) )
+                        , ( "minCardinality", JE.int input.minCardinality )
+                        , ( "maxCardinality", JE.int input.maxCardinality )
+                        , ( "fileTypes", JE.list (List.map JE.string input.fileTypes) )
+                        ]
+                  )
+                , ( "details"
+                  , JE.object
+                        [ ( "description", JE.string input.description )
+                        , ( "label", JE.string input.label )
+                        , ( "argument", JE.string input.argument )
+                        , ( "repeatArgument", JE.bool input.repeatArgument )
+                        , ( "showArgument", JE.bool input.showArgument )
+                        ]
+                  )
+                ]
+    in
     JE.encode 4
         (JE.object
             [ ( "name", JE.string model.appName )
@@ -400,21 +580,18 @@ encodeApp model =
             , ( "modules", JE.list (List.map JE.string model.modules) )
             , ( "tags", JE.list (List.map JE.string model.tags) )
             , ( "ontology", JE.list (List.map JE.string model.ontology) )
+            , ( "inputs"
+              , JE.list
+                    (List.map encodeInput
+                        (List.sortBy .displayOrder (Dict.values model.inputs))
+                    )
+              )
             ]
         )
 
 
-viewInputs : Model -> Html Msg
-viewInputs model =
-    let
-        id =
-            case model.editingInputId of
-                Just n ->
-                    toString n
-
-                _ ->
-                    "Nada"
-    in
+paneInputs : Model -> Html Msg
+paneInputs model =
     div [ class "form-group", style [ ( "text-align", "center" ) ] ]
         [ button
             [ type_ "button"
@@ -422,107 +599,108 @@ viewInputs model =
             , onClick AddInput
             ]
             [ text "Add Input" ]
-        , text ("editing " ++ id)
-
-        --, inputDialog model
+        , inputDialog model
         , inputTable model.inputs
         ]
 
 
 inputDialog model =
     let
-        currentInput =
+        currentInputId =
             case model.editingInputId of
                 Just id ->
-                    case Dict.get id model.inputs of
-                        Just inp ->
-                            inp
+                    id
 
-                        _ ->
-                            Nothing
+                Nothing ->
+                    0
 
-                _ ->
-                    Nothing
-
-        mkTr name defaultVal =
-            tr []
-                [ th [] [ text name ]
-                , td []
-                    [ Html.input
-                        [ type_ "text"
-                        , defaultValue defaultVal
-                        , class "form-control"
-                        ]
-                        []
-                    ]
-                ]
-
-        body =
-            case currentInput of
-                Just input ->
-                    tbl input
-
-                _ ->
-                    text "Something went wobbly"
+        currentInput =
+            Dict.get currentInputId model.inputs
 
         tbl input =
             Html.form []
                 [ table []
-                    [ mkTr "Id" input.id
-                    , mkTr "Default Value" input.defaultValue
-                    , mkTr "Display Order" (toString input.displayOrder)
-                    , mkTr "Validator" input.validator
-                    , mkTr "Required"
-                        (if input.required then
-                            "Yes"
-                         else
-                            "No"
-                        )
-                    , mkTr "Visible"
-                        (if input.visible then
-                            "Yes"
-                         else
-                            "No"
-                        )
-                    , mkTr "Ontology" (String.join ", " input.ontology)
-                    , mkTr "Min Cardinality" (toString input.minCardinality)
-                    , mkTr "Max Cardinality" (toString input.maxCardinality)
+                    [ mkRowTextEntry
+                        "Id"
+                        input.id
+                        (UpdateAppInputId currentInputId)
+                    , mkRowTextEntry
+                        "Default Value"
+                        input.defaultValue
+                        (UpdateAppInputDefaultValue currentInputId)
+                    , mkRowTextEntry
+                        "Display Order"
+                        (toString input.displayOrder)
+                        (UpdateAppInputDisplayOrder currentInputId)
+                    , mkRowTextEntry
+                        "Validator"
+                        input.validator
+                        NoOp
+                    , mkRowCheckbox "Required"
+                        input.required
+                        (ToggleAppInputRequired currentInputId)
+                    , mkRowCheckbox
+                        "Visible"
+                        input.visible
+                        (ToggleAppInputVisible currentInputId)
+                    , mkRowTextEntry
+                        "Ontology"
+                        (String.join ", " input.ontology)
+                        (UpdateAppInputOntology currentInputId)
+                    , mkRowTextEntry
+                        "Min Cardinality"
+                        (toString input.minCardinality)
+                        NoOp
+                    , mkRowTextEntry
+                        "Max Cardinality"
+                        (toString input.maxCardinality)
+                        NoOp
                     ]
                 ]
     in
     Dialog.view
-        (Just
-            { closeMessage = Nothing
-            , containerClass = Nothing
-            , header = Just (text "Add Param")
-            , body = Just body
-            , footer =
+        (case currentInput of
+            Just input ->
                 Just
-                    (div
-                        []
-                        [ button
-                            [ class "btn btn-primary"
-                            , type_ "button"
+                    { closeMessage = Nothing
+                    , containerClass = Nothing
+                    , header = Just (text "Add Input")
+                    , body = Just (tbl input)
+                    , footer =
+                        Just
+                            (div
+                                []
+                                [ button
+                                    [ class "btn btn-primary"
+                                    , type_ "button"
+                                    , onClick CloseInputDialog
+                                    ]
+                                    [ text "Close" ]
+                                ]
+                            )
+                    }
 
-                            --, onClick ToggleInputForm
-                            ]
-                            [ text "Close" ]
-                        ]
-                    )
-            }
+            Nothing ->
+                Nothing
         )
 
 
-
--- inputTable : List Input -> Html Msg
-
-
+inputTable : Dict.Dict Int AppInput -> Html Msg
 inputTable inputs =
     let
         inputTr ( id, input ) =
             tr []
                 [ td [] [ text input.id ]
                 , td [] [ text (toString input.displayOrder) ]
+                , td [] [ text input.defaultValue ]
+                , td []
+                    [ text
+                        (if input.required then
+                            "✓"
+                         else
+                            ""
+                        )
+                    ]
                 , td []
                     [ button
                         [ class "btn btn-default"
@@ -537,9 +715,14 @@ inputTable inputs =
                 ([ tr []
                     [ th [] [ text "Id" ]
                     , th [] [ text "Order" ]
+                    , th [] [ text "DefVal" ]
+                    , th [] [ text "Required" ]
                     ]
                  ]
-                    ++ List.map inputTr (Dict.toList inputs)
+                    ++ List.map inputTr
+                        (List.sortBy (\( id, d ) -> d.displayOrder)
+                            (Dict.toList inputs)
+                        )
                 )
     in
     case Dict.isEmpty inputs of
@@ -562,7 +745,7 @@ view model =
                 [ Tab.item
                     { id = "tabMain"
                     , link = Tab.link [] [ text "Main" ]
-                    , pane = Tab.pane [] [ br [] [], viewMain model ]
+                    , pane = Tab.pane [] [ br [] [], paneMain model ]
                     }
                 , Tab.item
                     { id = "tabInputs"
@@ -577,7 +760,7 @@ view model =
                                     ++ ")"
                                 )
                             ]
-                    , pane = Tab.pane [] [ br [] [], viewInputs model ]
+                    , pane = Tab.pane [] [ br [] [], paneInputs model ]
                     }
                 , Tab.item
                     { id = "tabParams"
@@ -618,7 +801,7 @@ mkTh label =
     th [ style [ ( "align", "right" ) ] ] [ text label ]
 
 
-textEntry label defValue msg =
+mkRowTextEntry label defValue msg =
     tr []
         [ mkTh label
         , td []
@@ -634,7 +817,7 @@ textEntry label defValue msg =
         ]
 
 
-textArea label defValue msg =
+mkRowTextArea label defValue msg =
     tr []
         [ mkTh label
         , td []
@@ -650,7 +833,7 @@ textArea label defValue msg =
         ]
 
 
-checkbox label msg state =
+mkRowCheckbox label state msg =
     tr []
         [ mkTh label
         , td []
@@ -665,15 +848,15 @@ checkbox label msg state =
         ]
 
 
-radioButtonGroup label options =
+mkRowRadioButtonGroup label options =
     tr []
         [ mkTh label
         , td []
-            [ fieldset [] (List.map radio options) ]
+            [ fieldset [] (List.map mkRadio options) ]
         ]
 
 
-radio ( value, state, msg ) =
+mkRadio ( value, state, msg ) =
     label []
         [ input
             [ type_ "radio"
@@ -686,19 +869,19 @@ radio ( value, state, msg ) =
         ]
 
 
-viewMain : Model -> Html Msg
-viewMain model =
+paneMain : Model -> Html Msg
+paneMain model =
     div []
         [ Html.form []
             [ table []
-                [ textEntry "Name" model.appName UpdateAppName
-                , textEntry "Label" model.label UpdateLabel
-                , textEntry "Version" model.version UpdateVersion
-                , textEntry "Help URI" model.helpURI UpdateHelpURI
-                , textArea "Short Description"
+                [ mkRowTextEntry "Name" model.appName UpdateAppName
+                , mkRowTextEntry "Label" model.label UpdateLabel
+                , mkRowTextEntry "Version" model.version UpdateVersion
+                , mkRowTextEntry "Help URI" model.helpURI UpdateHelpURI
+                , mkRowTextArea "Short Description"
                     model.shortDescription
                     UpdateShortDescription
-                , textArea "Long Description"
+                , mkRowTextArea "Long Description"
                     model.longDescription
                     UpdateLongDescription
                 ]
@@ -711,36 +894,40 @@ viewAdvanced model =
     div []
         [ Html.form []
             [ table []
-                [ checkbox "Available" ToggleAvailable model.available
-                , checkbox "Checkpointable" ToggleCheckpointable model.checkpointable
-                , textEntry "Default Memory Per Node"
+                [ mkRowCheckbox "Available"
+                    model.available
+                    ToggleAvailable
+                , mkRowCheckbox "Checkpointable"
+                    model.checkpointable
+                    ToggleCheckpointable
+                , mkRowTextEntry "Default Memory Per Node"
                     (toString model.defaultMemoryPerNode)
                     UpdateDefaultMemoryPerNode
-                , textEntry "Default Processors Per Node"
+                , mkRowTextEntry "Default Processors Per Node"
                     (toString model.defaultProcessorsPerNode)
                     UpdateDefaultProcessorsPerNode
-                , textEntry "Default Max Run Time"
+                , mkRowTextEntry "Default Max Run Time"
                     model.defaultMaxRunTime
                     UpdateDefaultMaxRunTime
-                , textEntry "Default Node Count"
+                , mkRowTextEntry "Default Node Count"
                     (toString model.defaultNodeCount)
                     UpdateDefaultNodeCount
-                , textEntry "Default Queue"
+                , mkRowTextEntry "Default Queue"
                     model.defaultQueue
                     UpdateDefaultQueue
-                , textEntry "Deployment Path"
+                , mkRowTextEntry "Deployment Path"
                     model.deploymentPath
                     UpdateDeploymentPath
-                , textEntry "Deployment System"
+                , mkRowTextEntry "Deployment System"
                     model.deploymentSystem
                     UpdateDeploymentSystem
-                , textEntry "Execution System"
+                , mkRowTextEntry "Execution System"
                     model.executionSystem
                     UpdateExecutionSystem
-                , textEntry "Execution Type"
+                , mkRowTextEntry "Execution Type"
                     model.executionType
                     UpdateExecutionType
-                , radioButtonGroup "Parallelism"
+                , mkRowRadioButtonGroup "Parallelism"
                     [ ( "Serial"
                       , model.parallelism == Serial
                       , UpdateParallelism Serial
@@ -750,17 +937,17 @@ viewAdvanced model =
                       , UpdateParallelism Parallel
                       )
                     ]
-                , textEntry "Template Path"
+                , mkRowTextEntry "Template Path"
                     model.templatePath
                     UpdateTemplatePath
-                , textEntry "Test Path" model.testPath UpdateTestPath
-                , textEntry "Modules"
+                , mkRowTextEntry "Test Path" model.testPath UpdateTestPath
+                , mkRowTextEntry "Modules"
                     (String.join ", " model.modules)
                     UpdateModules
-                , textEntry "Tags"
+                , mkRowTextEntry "Tags"
                     (String.join ", " model.tags)
                     UpdateTags
-                , textEntry "Ontology"
+                , mkRowTextEntry "Ontology"
                     (String.join ", " model.ontology)
                     UpdateOntology
                 ]
