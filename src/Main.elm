@@ -38,11 +38,12 @@ type alias Model =
     , tags : List String
     , templatePath : String
     , testPath : String
-    , inputs : Dict.Dict Int AppInput
+    , inputs : Dict.Dict String AppInput
     , parameters : List AppParam
     , showJson : Bool
     , error : Maybe String
     , tabState : Tab.State
+    , inputToModify : Maybe AppInput
     , editingInputId : Maybe Int
     }
 
@@ -52,7 +53,8 @@ type alias Model =
 
 
 type alias AppInput =
-    { id : String
+    { originalInputId : String
+    , id : String
     , defaultValue : String
     , displayOrder : Int
     , validator : String
@@ -138,12 +140,14 @@ initialModel =
     , showJson = False
     , error = Nothing
     , tabState = Tab.initialState
+    , inputToModify = Nothing
     , editingInputId = Nothing
     }
 
 
-initialInput =
-    { id = "INPUT"
+initialAppInput =
+    { originalInputId = ""
+    , id = "INPUT"
     , defaultValue = ""
     , displayOrder = 0
     , validator = ""
@@ -154,7 +158,7 @@ initialInput =
     , maxCardinality = -1
     , fileTypes = [ "raw-0" ]
     , description = ""
-    , label = "INPUT"
+    , label = "LABEL"
     , argument = ""
     , repeatArgument = False
     , showArgument = True
@@ -173,20 +177,33 @@ init =
 
 type Msg
     = NoOp String
-    | AddInput
     | CloseJsonDialog
-    | CloseInputDialog
+    | CloseAppInputDialog
+    | CloseModifyAppInputDialog
     | ShowInputDialog Int
     | ShowJsonDialog
     | TabMsg Tab.State
-    | ToggleAppInputRequired Int
-    | ToggleAppInputVisible Int
+    | OpenModifyAppInputDialog AppInput
+    | SaveAppInput
+    | SetAppInputToModify String
     | ToggleAvailable
     | ToggleCheckpointable
-    | UpdateAppInputDefaultValue Int String
-    | UpdateAppInputDisplayOrder Int String
-    | UpdateAppInputId Int String
-    | UpdateAppInputOntology Int String
+    | UpdateAppInputArgument String
+    | UpdateAppInputDefaultValue String
+    | UpdateAppInputDescription String
+    | UpdateAppInputDisplayOrder String
+    | UpdateAppInputFileTypes String
+    | UpdateAppInputId String
+    | UpdateAppInputLabel String
+    | UpdateAppInputMaxCardinality String
+    | UpdateAppInputMinCardinality String
+    | UpdateAppInputValidator String
+    | UpdateAppInputToggleEnquoteValue
+    | UpdateAppInputToggleRepeatArgument
+    | UpdateAppInputToggleRequired
+    | UpdateAppInputToggleShowArgument
+    | UpdateAppInputToggleVisible
+    | UpdateAppInputOntology String
     | UpdateAppName String
     | UpdateDefaultMaxRunTime String
     | UpdateDefaultMemoryPerNode String
@@ -216,34 +233,51 @@ update msg model =
         NoOp val ->
             ( model, Cmd.none )
 
-        AddInput ->
-            let
-                newId =
-                    case List.maximum (Dict.keys model.inputs) of
-                        Nothing ->
-                            1
+        CloseAppInputDialog ->
+            ( { model | inputToModify = Nothing }, Cmd.none )
 
-                        Just n ->
-                            n + 1
+        CloseJsonDialog ->
+            ( { model | showJson = False }, Cmd.none )
 
-                insertInput =
-                    { initialInput
-                        | id = "INPUT" ++ toString newId
-                        , displayOrder =
-                            List.length (Dict.keys model.inputs) + 1
-                    }
-            in
+        CloseModifyAppInputDialog ->
+            ( { model | inputToModify = Nothing }, Cmd.none )
+
+        OpenModifyAppInputDialog input ->
             ( { model
-                | inputs = Dict.insert newId insertInput model.inputs
+                | inputToModify = Just { input | originalInputId = input.id }
               }
             , Cmd.none
             )
 
-        CloseInputDialog ->
-            ( { model | editingInputId = Nothing }, Cmd.none )
+        SaveAppInput ->
+            let
+                newInputs =
+                    case model.inputToModify of
+                        Just input ->
+                            Dict.update input.id
+                                (\_ -> Just input)
+                                (Dict.remove input.originalInputId model.inputs)
 
-        CloseJsonDialog ->
-            ( { model | showJson = False }, Cmd.none )
+                        _ ->
+                            model.inputs
+            in
+            ( { model | inputs = newInputs, inputToModify = Nothing }
+            , Cmd.none
+            )
+
+        SetAppInputToModify id ->
+            let
+                newInput =
+                    case Dict.get id model.inputs of
+                        Just input ->
+                            Just { input | originalInputId = input.id }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }
+            , Cmd.none
+            )
 
         ShowInputDialog inputId ->
             -- Should I bother to check that inputNum is in the range of inputs?
@@ -257,53 +291,245 @@ update msg model =
             , Cmd.none
             )
 
-        ToggleAppInputRequired inputId ->
-            let
-                newInputs =
-                    toggleAppInputRequired model.inputs inputId
-            in
-            ( { model | inputs = newInputs }, Cmd.none )
-
-        ToggleAppInputVisible inputId ->
-            let
-                newInputs =
-                    toggleAppInputVisible model.inputs inputId
-            in
-            ( { model | inputs = newInputs }, Cmd.none )
-
         ToggleAvailable ->
             ( { model | available = not model.available }, Cmd.none )
 
         ToggleCheckpointable ->
             ( { model | checkpointable = not model.checkpointable }, Cmd.none )
 
-        UpdateAppInputDefaultValue inputId val ->
+        UpdateAppInputArgument val ->
             let
-                newInputs =
-                    updateAppInputDefaultValue model.inputs inputId val
-            in
-            ( { model | inputs = newInputs }, Cmd.none )
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | argument = val }
 
-        UpdateAppInputDisplayOrder inputId val ->
-            let
-                newInputs =
-                    updateAppInputDisplayOrder model.inputs inputId val
+                        _ ->
+                            Nothing
             in
-            ( { model | inputs = newInputs }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
-        UpdateAppInputId inputId val ->
+        UpdateAppInputDefaultValue val ->
             let
-                newInputs =
-                    updateAppInputId model.inputs inputId val
-            in
-            ( { model | inputs = newInputs }, Cmd.none )
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | defaultValue = val }
 
-        UpdateAppInputOntology inputId val ->
-            let
-                newInputs =
-                    updateAppInputOntology model.inputs inputId val
+                        _ ->
+                            Nothing
             in
-            ( { model | inputs = newInputs }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputDescription val ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | description = val }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputDisplayOrder val ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            let
+                                newDisplayOrder =
+                                    case String.toInt val of
+                                        Ok n ->
+                                            n
+
+                                        _ ->
+                                            input.displayOrder
+                            in
+                            Just { input | displayOrder = newDisplayOrder }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputFileTypes val ->
+            let
+                newFileTypes =
+                    List.map String.trim (String.split "," val)
+
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | fileTypes = newFileTypes }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputId val ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | id = val }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputLabel val ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | label = val }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputMaxCardinality val ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            let
+                                newVal =
+                                    case String.toInt val of
+                                        Ok n ->
+                                            n
+
+                                        _ ->
+                                            input.maxCardinality
+                            in
+                            Just { input | maxCardinality = newVal }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputMinCardinality val ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            let
+                                newVal =
+                                    case String.toInt val of
+                                        Ok n ->
+                                            n
+
+                                        _ ->
+                                            input.minCardinality
+                            in
+                            Just { input | minCardinality = newVal }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputToggleEnquoteValue ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just
+                                { input
+                                    | enquoteValue = not input.enquoteValue
+                                }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputToggleRepeatArgument ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just
+                                { input
+                                    | repeatArgument = not input.repeatArgument
+                                }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputToggleRequired ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | required = not input.required }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputToggleShowArgument ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just
+                                { input
+                                    | showArgument = not input.showArgument
+                                }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputToggleVisible ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | visible = not input.visible }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputValidator val ->
+            let
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | validator = val }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
+
+        UpdateAppInputOntology val ->
+            let
+                newOntology =
+                    List.map String.trim (String.split "," val)
+
+                newInput =
+                    case model.inputToModify of
+                        Just input ->
+                            Just { input | ontology = newOntology }
+
+                        _ ->
+                            Nothing
+            in
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppName val ->
             ( { model | appName = val }, Cmd.none )
@@ -408,105 +634,6 @@ update msg model =
             ( { model | version = val }, Cmd.none )
 
 
-addInput model =
-    model
-
-
-updateAppInputId currentInputs inputId val =
-    let
-        update v =
-            case v of
-                Nothing ->
-                    Nothing
-
-                Just input ->
-                    Just { input | id = val }
-    in
-    Dict.update inputId update currentInputs
-
-
-updateAppInputDisplayOrder currentInputs inputId val =
-    let
-        update new v =
-            case v of
-                Nothing ->
-                    Nothing
-
-                Just input ->
-                    Just { input | displayOrder = new }
-
-        _ =
-            Debug.log "method" "updateAppInputDisplayOrder"
-
-        _ =
-            Debug.log "inputId" inputId
-
-        _ =
-            Debug.log "val" val
-    in
-    case String.toInt val of
-        Ok n ->
-            Dict.update inputId (update n) currentInputs
-
-        _ ->
-            currentInputs
-
-
-updateAppInputDefaultValue currentInputs inputId val =
-    let
-        update v =
-            case v of
-                Nothing ->
-                    Nothing
-
-                Just input ->
-                    Just { input | defaultValue = val }
-    in
-    Dict.update inputId update currentInputs
-
-
-updateAppInputOntology currentInputs inputId val =
-    let
-        newOntology =
-            List.map String.trim (String.split "," val)
-
-        update v =
-            case v of
-                Nothing ->
-                    Nothing
-
-                Just input ->
-                    Just { input | ontology = newOntology }
-    in
-    Dict.update inputId update currentInputs
-
-
-toggleAppInputRequired currentInputs inputId =
-    let
-        update v =
-            case v of
-                Nothing ->
-                    Nothing
-
-                Just input ->
-                    Just { input | required = not input.required }
-    in
-    Dict.update inputId update currentInputs
-
-
-toggleAppInputVisible currentInputs inputId =
-    let
-        update v =
-            case v of
-                Nothing ->
-                    Nothing
-
-                Just input ->
-                    Just { input | visible = not input.visible }
-    in
-    Dict.update inputId update currentInputs
-
-
 
 ---- VIEW ----
 
@@ -529,10 +656,14 @@ encodeApp model =
                   )
                 , ( "semantics"
                   , JE.object
-                        [ ( "ontology", JE.list (List.map JE.string input.ontology) )
+                        [ ( "ontology"
+                          , JE.list (List.map JE.string input.ontology)
+                          )
                         , ( "minCardinality", JE.int input.minCardinality )
                         , ( "maxCardinality", JE.int input.maxCardinality )
-                        , ( "fileTypes", JE.list (List.map JE.string input.fileTypes) )
+                        , ( "fileTypes"
+                          , JE.list (List.map JE.string input.fileTypes)
+                          )
                         ]
                   )
                 , ( "details"
@@ -592,74 +723,108 @@ encodeApp model =
 
 paneInputs : Model -> Html Msg
 paneInputs model =
+    let
+        maxDisplayOrder =
+            List.maximum
+                (List.map
+                    (\d -> d.displayOrder)
+                    (Dict.values model.inputs)
+                )
+
+        nextDisplayOrder =
+            case maxDisplayOrder of
+                Nothing ->
+                    1
+
+                Just n ->
+                    n + 1
+    in
     div [ class "form-group", style [ ( "text-align", "center" ) ] ]
         [ button
             [ type_ "button"
             , class "btn btn-default"
-            , onClick AddInput
+            , onClick
+                (OpenModifyAppInputDialog
+                    { initialAppInput
+                        | id = "INPUT" ++ toString nextDisplayOrder
+                        , displayOrder = nextDisplayOrder
+                    }
+                )
             ]
             [ text "Add Input" ]
-        , inputDialog model
-        , inputTable model.inputs
+        , modifyAppInputDialog model
+        , appInputTable model.inputs
         ]
 
 
-inputDialog model =
+modifyAppInputDialog model =
     let
-        currentInputId =
-            case model.editingInputId of
-                Just id ->
-                    id
-
-                Nothing ->
-                    0
-
-        currentInput =
-            Dict.get currentInputId model.inputs
-
-        tbl input =
-            Html.form []
-                [ table []
-                    [ mkRowTextEntry
-                        "Id"
-                        input.id
-                        (UpdateAppInputId currentInputId)
-                    , mkRowTextEntry
-                        "Default Value"
-                        input.defaultValue
-                        (UpdateAppInputDefaultValue currentInputId)
-                    , mkRowTextEntry
-                        "Display Order"
-                        (toString input.displayOrder)
-                        (UpdateAppInputDisplayOrder currentInputId)
-                    , mkRowTextEntry
-                        "Validator"
-                        input.validator
-                        NoOp
-                    , mkRowCheckbox "Required"
-                        input.required
-                        (ToggleAppInputRequired currentInputId)
-                    , mkRowCheckbox
-                        "Visible"
-                        input.visible
-                        (ToggleAppInputVisible currentInputId)
-                    , mkRowTextEntry
-                        "Ontology"
-                        (String.join ", " input.ontology)
-                        (UpdateAppInputOntology currentInputId)
-                    , mkRowTextEntry
-                        "Min Cardinality"
-                        (toString input.minCardinality)
-                        NoOp
-                    , mkRowTextEntry
-                        "Max Cardinality"
-                        (toString input.maxCardinality)
-                        NoOp
+        tbl appInput =
+            div [ style [ ( "overflow-y", "auto" ), ( "max-height", "60vh" ) ] ]
+                [ Html.form []
+                    [ table []
+                        [ mkRowTextEntry "Id"
+                            appInput.id
+                            UpdateAppInputId
+                        , mkRowTextEntry "Label"
+                            appInput.label
+                            UpdateAppInputLabel
+                        , mkRowTextEntry "Argument"
+                            appInput.argument
+                            UpdateAppInputArgument
+                        , mkRowCheckbox "Repeat Argument"
+                            appInput.repeatArgument
+                            UpdateAppInputToggleRepeatArgument
+                        , mkRowCheckbox "Show Argument"
+                            appInput.showArgument
+                            UpdateAppInputToggleShowArgument
+                        , mkRowCheckbox "Enquote Value"
+                            appInput.enquoteValue
+                            UpdateAppInputToggleEnquoteValue
+                        , mkRowTextEntry "Default Value"
+                            appInput.defaultValue
+                            UpdateAppInputDefaultValue
+                        , mkRowTextEntry
+                            "Display Order"
+                            (toString appInput.displayOrder)
+                            UpdateAppInputDisplayOrder
+                        , mkRowTextEntry
+                            "Validator"
+                            appInput.validator
+                            UpdateAppInputValidator
+                        , mkRowCheckbox "Required"
+                            appInput.required
+                            UpdateAppInputToggleRequired
+                        , mkRowCheckbox
+                            "Visible"
+                            appInput.visible
+                            UpdateAppInputToggleVisible
+                        , mkRowTextEntry
+                            "Ontology"
+                            (String.join ", " appInput.ontology)
+                            UpdateAppInputOntology
+                        , mkRowTextEntry
+                            "Min Cardinality"
+                            (toString appInput.minCardinality)
+                            UpdateAppInputMinCardinality
+                        , mkRowTextEntry
+                            "Max Cardinality"
+                            (toString appInput.maxCardinality)
+                            UpdateAppInputMaxCardinality
+                        , mkRowTextEntry
+                            "File Types"
+                            (String.join ", " appInput.fileTypes)
+                            UpdateAppInputFileTypes
+                        , mkRowTextEntry
+                            "Description"
+                            appInput.description
+                            UpdateAppInputDescription
+                        ]
                     ]
                 ]
     in
     Dialog.view
-        (case currentInput of
+        (case model.inputToModify of
             Just input ->
                 Just
                     { closeMessage = Nothing
@@ -673,9 +838,15 @@ inputDialog model =
                                 [ button
                                     [ class "btn btn-primary"
                                     , type_ "button"
-                                    , onClick CloseInputDialog
+                                    , onClick SaveAppInput
                                     ]
-                                    [ text "Close" ]
+                                    [ text "Save" ]
+                                , button
+                                    [ class "btn btn-default"
+                                    , type_ "button"
+                                    , onClick CloseAppInputDialog
+                                    ]
+                                    [ text "Cancel" ]
                                 ]
                             )
                     }
@@ -685,26 +856,27 @@ inputDialog model =
         )
 
 
-inputTable : Dict.Dict Int AppInput -> Html Msg
-inputTable inputs =
+appInputTable : Dict.Dict String AppInput -> Html Msg
+appInputTable inputs =
     let
+        checkIfTrue b =
+            if b then
+                "✓"
+            else
+                "✗"
+
         inputTr ( id, input ) =
             tr []
                 [ td [] [ text input.id ]
                 , td [] [ text (toString input.displayOrder) ]
+                , td [] [ text input.argument ]
                 , td [] [ text input.defaultValue ]
-                , td []
-                    [ text
-                        (if input.required then
-                            "✓"
-                         else
-                            ""
-                        )
-                    ]
+                , td [] [ text (checkIfTrue input.required) ]
+                , td [] [ text (checkIfTrue input.visible) ]
                 , td []
                     [ button
                         [ class "btn btn-default"
-                        , onClick (ShowInputDialog id)
+                        , onClick (SetAppInputToModify id)
                         ]
                         [ text "Edit" ]
                     ]
@@ -715,8 +887,10 @@ inputTable inputs =
                 ([ tr []
                     [ th [] [ text "Id" ]
                     , th [] [ text "Order" ]
-                    , th [] [ text "DefVal" ]
+                    , th [] [ text "Arg" ]
+                    , th [] [ text "Val" ]
                     , th [] [ text "Required" ]
+                    , th [] [ text "Visible" ]
                     ]
                  ]
                     ++ List.map inputTr
