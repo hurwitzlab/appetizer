@@ -70,6 +70,7 @@ type alias AppInput =
     , repeatArgument : Bool
     , showArgument : Bool
     , enquoteValue : Bool
+    , error : Maybe String
     }
 
 
@@ -163,6 +164,7 @@ initialAppInput =
     , repeatArgument = False
     , showArgument = True
     , enquoteValue = False
+    , error = Nothing
     }
 
 
@@ -339,15 +341,21 @@ update msg model =
                     case model.inputToModify of
                         Just input ->
                             let
-                                newDisplayOrder =
+                                ( newDisplayOrder, err ) =
                                     case String.toInt val of
                                         Ok n ->
-                                            n
+                                            ( n, Nothing )
 
-                                        _ ->
-                                            input.displayOrder
+                                        Err e ->
+                                            ( input.displayOrder
+                                            , Just e
+                                            )
                             in
-                            Just { input | displayOrder = newDisplayOrder }
+                            Just
+                                { input
+                                    | displayOrder = newDisplayOrder
+                                    , error = err
+                                }
 
                         _ ->
                             Nothing
@@ -399,15 +407,19 @@ update msg model =
                     case model.inputToModify of
                         Just input ->
                             let
-                                newVal =
+                                ( newVal, err ) =
                                     case String.toInt val of
                                         Ok n ->
-                                            n
+                                            ( n, Nothing )
 
-                                        _ ->
-                                            input.maxCardinality
+                                        Err e ->
+                                            ( input.maxCardinality, Just e )
                             in
-                            Just { input | maxCardinality = newVal }
+                            Just
+                                { input
+                                    | maxCardinality = newVal
+                                    , error = err
+                                }
 
                         _ ->
                             Nothing
@@ -420,15 +432,19 @@ update msg model =
                     case model.inputToModify of
                         Just input ->
                             let
-                                newVal =
+                                ( newVal, err ) =
                                     case String.toInt val of
                                         Ok n ->
-                                            n
+                                            ( n, Nothing )
 
-                                        _ ->
-                                            input.minCardinality
+                                        Err e ->
+                                            ( input.minCardinality, Just e )
                             in
-                            Just { input | minCardinality = newVal }
+                            Just
+                                { input
+                                    | minCardinality = newVal
+                                    , error = err
+                                }
 
                         _ ->
                             Nothing
@@ -539,39 +555,59 @@ update msg model =
 
         UpdateDefaultMemoryPerNode val ->
             let
-                num =
+                ( num, err ) =
                     case String.toInt val of
                         Ok n ->
-                            n
+                            ( n, Nothing )
 
                         Err _ ->
-                            model.defaultMemoryPerNode
+                            ( model.defaultMemoryPerNode
+                            , Just
+                                ("Default Mem Per Node ("
+                                    ++ val
+                                    ++ ") not a number"
+                                )
+                            )
             in
-            ( { model | defaultMemoryPerNode = num }, Cmd.none )
+            ( { model | defaultMemoryPerNode = num, error = err }, Cmd.none )
 
         UpdateDefaultNodeCount val ->
             let
-                num =
+                ( num, err ) =
                     case String.toInt val of
                         Ok n ->
-                            n
+                            ( n, Nothing )
 
                         Err _ ->
-                            model.defaultNodeCount
+                            ( model.defaultNodeCount
+                            , Just
+                                ("Default Node Count ("
+                                    ++ val
+                                    ++ ") not a number"
+                                )
+                            )
             in
-            ( { model | defaultNodeCount = num }, Cmd.none )
+            ( { model | defaultNodeCount = num, error = err }, Cmd.none )
 
         UpdateDefaultProcessorsPerNode val ->
             let
-                num =
+                ( num, err ) =
                     case String.toInt val of
                         Ok n ->
-                            n
+                            ( n, Nothing )
 
                         Err _ ->
-                            model.defaultProcessorsPerNode
+                            ( model.defaultProcessorsPerNode
+                            , Just
+                                ("Default Processors Per Node ("
+                                    ++ val
+                                    ++ ") not a number"
+                                )
+                            )
             in
-            ( { model | defaultProcessorsPerNode = num }, Cmd.none )
+            ( { model | defaultProcessorsPerNode = num, error = err }
+            , Cmd.none
+            )
 
         UpdateDefaultQueue val ->
             ( { model | defaultQueue = val }, Cmd.none )
@@ -760,65 +796,83 @@ paneInputs model =
 modifyAppInputDialog model =
     let
         tbl appInput =
-            div [ style [ ( "overflow-y", "auto" ), ( "max-height", "60vh" ) ] ]
-                [ Html.form []
-                    [ table []
-                        [ mkRowTextEntry "Id"
-                            appInput.id
-                            UpdateAppInputId
-                        , mkRowTextEntry "Label"
-                            appInput.label
-                            UpdateAppInputLabel
-                        , mkRowTextEntry "Argument"
-                            appInput.argument
-                            UpdateAppInputArgument
-                        , mkRowCheckbox "Repeat Argument"
-                            appInput.repeatArgument
-                            UpdateAppInputToggleRepeatArgument
-                        , mkRowCheckbox "Show Argument"
-                            appInput.showArgument
-                            UpdateAppInputToggleShowArgument
-                        , mkRowCheckbox "Enquote Value"
-                            appInput.enquoteValue
-                            UpdateAppInputToggleEnquoteValue
-                        , mkRowTextEntry "Default Value"
-                            appInput.defaultValue
-                            UpdateAppInputDefaultValue
-                        , mkRowTextEntry
-                            "Display Order"
-                            (toString appInput.displayOrder)
-                            UpdateAppInputDisplayOrder
-                        , mkRowTextEntry
-                            "Validator"
-                            appInput.validator
-                            UpdateAppInputValidator
-                        , mkRowCheckbox "Required"
-                            appInput.required
-                            UpdateAppInputToggleRequired
-                        , mkRowCheckbox
-                            "Visible"
-                            appInput.visible
-                            UpdateAppInputToggleVisible
-                        , mkRowTextEntry
-                            "Ontology"
-                            (String.join ", " appInput.ontology)
-                            UpdateAppInputOntology
-                        , mkRowTextEntry
-                            "Min Cardinality"
-                            (toString appInput.minCardinality)
-                            UpdateAppInputMinCardinality
-                        , mkRowTextEntry
-                            "Max Cardinality"
-                            (toString appInput.maxCardinality)
-                            UpdateAppInputMaxCardinality
-                        , mkRowTextEntry
-                            "File Types"
-                            (String.join ", " appInput.fileTypes)
-                            UpdateAppInputFileTypes
-                        , mkRowTextEntry
-                            "Description"
-                            appInput.description
-                            UpdateAppInputDescription
+            let
+                err =
+                    case appInput.error of
+                        Nothing ->
+                            div [] [ text "" ]
+
+                        Just e ->
+                            div [ class "alert alert-danger" ]
+                                [ text ("Error: " ++ e) ]
+            in
+            div []
+                [ err
+                , div
+                    [ style
+                        [ ( "overflow-y", "auto" )
+                        , ( "max-height", "60vh" )
+                        ]
+                    ]
+                    [ Html.form []
+                        [ table []
+                            [ mkRowTextEntry "Id"
+                                appInput.id
+                                UpdateAppInputId
+                            , mkRowTextEntry "Label"
+                                appInput.label
+                                UpdateAppInputLabel
+                            , mkRowTextEntry
+                                "Description"
+                                appInput.description
+                                UpdateAppInputDescription
+                            , mkRowTextEntry "Argument"
+                                appInput.argument
+                                UpdateAppInputArgument
+                            , mkRowCheckbox "Repeat Argument"
+                                appInput.repeatArgument
+                                UpdateAppInputToggleRepeatArgument
+                            , mkRowCheckbox "Show Argument"
+                                appInput.showArgument
+                                UpdateAppInputToggleShowArgument
+                            , mkRowCheckbox "Enquote Value"
+                                appInput.enquoteValue
+                                UpdateAppInputToggleEnquoteValue
+                            , mkRowTextEntry "Default Value"
+                                appInput.defaultValue
+                                UpdateAppInputDefaultValue
+                            , mkRowTextEntry
+                                "Display Order"
+                                (toString appInput.displayOrder)
+                                UpdateAppInputDisplayOrder
+                            , mkRowTextEntry
+                                "Validator"
+                                appInput.validator
+                                UpdateAppInputValidator
+                            , mkRowCheckbox "Required"
+                                appInput.required
+                                UpdateAppInputToggleRequired
+                            , mkRowCheckbox
+                                "Visible"
+                                appInput.visible
+                                UpdateAppInputToggleVisible
+                            , mkRowTextEntry
+                                "Ontology"
+                                (String.join ", " appInput.ontology)
+                                UpdateAppInputOntology
+                            , mkRowTextEntry
+                                "Min Cardinality"
+                                (toString appInput.minCardinality)
+                                UpdateAppInputMinCardinality
+                            , mkRowTextEntry
+                                "Max Cardinality"
+                                (toString appInput.maxCardinality)
+                                UpdateAppInputMaxCardinality
+                            , mkRowTextEntry
+                                "File Types"
+                                (String.join ", " appInput.fileTypes)
+                                UpdateAppInputFileTypes
+                            ]
                         ]
                     ]
                 ]
@@ -909,11 +963,21 @@ appInputTable inputs =
 
 view : Model -> Html Msg
 view model =
+    let
+        err =
+            case model.error of
+                Nothing ->
+                    div [] [ text "" ]
+
+                Just e ->
+                    div [ class "alert alert-danger" ]
+                        [ text ("Error: " ++ e) ]
+    in
     Grid.container []
         [ h1 [] [ text "The Appetizer" ]
+        , err
         , Tab.config TabMsg
             |> Tab.withAnimation
-            -- remember to wire up subscriptions when using this option
             |> Tab.right
             |> Tab.items
                 [ Tab.item
