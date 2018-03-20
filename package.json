@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/hurwitzlab/appetizer#readme",
   "dependencies": {
-    "bootstrap": "^3.3.7"
+    "bootstrap": "^3.3.7",
+    "npm": "^5.7.1"
   }
 }
