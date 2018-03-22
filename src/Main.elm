@@ -58,6 +58,7 @@ type alias TestApp =
     , ontology : List String
     , tags : List String
     , inputs : List AppInput
+    , parameters : List TestAppParam
     }
 
 
@@ -128,9 +129,12 @@ type alias TestAppParam =
     , showArgument : Bool
     , repeatArgument : Bool
     , enquoteValue : Bool
-    , minCardinality : Int
-    , maxCardinality : Int
+    , enumValues : List ( String, String )
     }
+
+
+type alias EnumValue =
+    ( String, String )
 
 
 type alias AppParam =
@@ -147,8 +151,6 @@ type alias AppParam =
     , showArgument : Bool
     , repeatArgument : Bool
     , enquoteValue : Bool
-    , minCardinality : Int
-    , maxCardinality : Int
     , enumValues : List ( String, String )
     , inputEnumKey : String
     , inputEnumValue : String
@@ -204,6 +206,7 @@ initialTestApp =
     , templatePath = "template.sh"
     , parallelism = "serial"
     , inputs = []
+    , parameters = []
     }
 
 
@@ -270,8 +273,6 @@ initialAppParam =
     , showArgument = True
     , repeatArgument = False
     , enquoteValue = False
-    , minCardinality = -1
-    , maxCardinality = 1
     , enumValues = []
     , inputEnumKey = ""
     , inputEnumValue = ""
@@ -331,8 +332,8 @@ type Msg
     | UpdateAppParamEnumValue String
     | UpdateAppParamLabel String
     | UpdateAppParamId String
-    | UpdateAppParamMaxCardinality String
-    | UpdateAppParamMinCardinality String
+      --| UpdateAppParamMaxCardinality String
+      --| UpdateAppParamMinCardinality String
     | UpdateAppParamToggleEnquoteValue
     | UpdateAppParamToggleRequired
     | UpdateAppParamToggleRepeatArgument
@@ -902,6 +903,7 @@ update msg model =
             in
                 ( { model | paramToModify = newParam }, Cmd.none )
 
+        {--
         UpdateAppParamMaxCardinality val ->
             let
                 ( newParam, newError ) =
@@ -957,7 +959,7 @@ update msg model =
                 ( { model | paramToModify = newParam, appParamError = newError }
                 , Cmd.none
                 )
-
+                --}
         UpdateAppParamToggleEnquoteValue ->
             let
                 newParam =
@@ -1702,12 +1704,15 @@ modifyAppParamDialog model =
                                 , mkRowCheckbox "Enquote Value"
                                     param.enquoteValue
                                     UpdateAppParamToggleEnquoteValue
+
+                                {--
                                 , mkRowTextEntry "Min. Cardinality"
                                     (toString param.minCardinality)
                                     UpdateAppParamMinCardinality
                                 , mkRowTextEntry "Max. Cardinality"
                                     (toString param.maxCardinality)
                                     UpdateAppParamMaxCardinality
+                                    --}
                                 ]
                             ]
                         ]
@@ -1960,7 +1965,6 @@ view model =
                             Tab.pane []
                                 [ br [] []
                                 , paneMain model.app
-                                , pre [] [ text (toString model.app) ]
                                 ]
                         }
                     , Tab.item
@@ -2117,33 +2121,22 @@ mkRadio ( value, state, msg ) =
 
 paneJson : Model -> Html Msg
 paneJson model =
-    let
-        err =
-            case model.error of
-                Nothing ->
-                    div [] [ text "" ]
-
-                Just e ->
-                    div [ class "alert alert-danger" ]
-                        [ text ("Error: " ++ e) ]
-    in
-        div []
-            [ err
-            , pre [] [ text (toString model.testapp) ]
-            , textarea
-                [ defaultValue (encodeApp model.app)
-                , onInput UpdateIncomingJson
-                , cols 100
-                , rows 40
-                ]
-                []
-            , button
-                [ type_ "button"
-                , onClick DecodeIncomingJson
-                , class "btn btn-primary"
-                ]
-                [ text "Update App" ]
+    div []
+        [ pre [] [ text (toString model.testapp) ]
+        , textarea
+            [ defaultValue (encodeApp model.app)
+            , onInput UpdateIncomingJson
+            , cols 100
+            , rows 40
             ]
+            []
+        , button
+            [ type_ "button"
+            , onClick DecodeIncomingJson
+            , class "btn btn-primary"
+            ]
+            [ text "Update App" ]
+        ]
 
 
 paneMain : App -> Html Msg
@@ -2282,10 +2275,11 @@ decoderApp =
         |> Pipeline.required "templatePath" Decode.string
         |> Pipeline.required "testPath" Decode.string
         |> Pipeline.required "parallelism" Decode.string
-        |> Pipeline.required "modules" (Decode.list Decode.string)
-        |> Pipeline.required "ontology" (Decode.list Decode.string)
-        |> Pipeline.required "tags" (Decode.list Decode.string)
-        |> Pipeline.required "inputs" (Decode.list decoderAppInput)
+        |> Pipeline.optional "modules" (Decode.list Decode.string) []
+        |> Pipeline.optional "ontology" (Decode.list Decode.string) []
+        |> Pipeline.optional "tags" (Decode.list Decode.string) []
+        |> Pipeline.optional "inputs" (Decode.list decoderAppInput) []
+        |> Pipeline.optional "parameters" (Decode.list decoderAppParam) []
 
 
 decoderAppInput : Decoder AppInput
@@ -2328,17 +2322,21 @@ decoderAppParam =
         |> custom (at [ "details", "showArgument" ] Decode.bool)
         |> custom (at [ "details", "repeatArgument" ] Decode.bool)
         |> Pipeline.optionalAt [ "value", "enquote" ] Decode.bool False
-        |> custom (at [ "semantics", "minCardinality" ] Decode.int)
-        |> custom (at [ "semantics", "maxCardinality" ] Decode.int)
+        |> Pipeline.optionalAt [ "value", "enumValues" ]
+            (Decode.list
+                (Decode.map2 (,)
+                    Decode.string
+                    Decode.string
+                )
+            )
+            []
 
 
 
 {--
-decoderEnumParamValue : Decoder EnumParamValue
-decoderEnumParamValue =
-    decode EnumParamValue
-        |> Pipeline.required "paramKey" Decode.string
-        --}
+        |> Pipeline.optionalAt [ "value", "enumValues" ]
+            JD.list <| JD.map2 (,) (index 0 string) (index 1 string)
+            --}
 
 
 decoderAppParamType =
