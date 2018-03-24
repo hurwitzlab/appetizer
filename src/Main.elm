@@ -108,6 +108,11 @@ type alias AppParam =
     }
 
 
+type Direction
+    = Up
+    | Down
+
+
 type AppParamDefaultValue
     = AppParamDefaultValString String
     | AppParamDefaultValBool Bool
@@ -223,14 +228,16 @@ type Msg
     | DeleteAppInput Int
     | DeleteAppParam Int
     | DecodeIncomingJson
-    | ShowJsonDialog
     | TabMsg Tab.State
+    | MoveAppInput Direction Int
+    | MoveAppParam Direction Int
     | OpenModifyAppInputDialog AppInput
     | OpenModifyAppParamDialog AppParam
     | SaveAppInput
     | SaveAppParam
     | SetAppInputToModify Int
     | SetAppParamToModify Int
+    | ShowJsonDialog
     | ToggleAppAvailable
     | ToggleAppCheckpointable
     | UpdateAppInputId String
@@ -331,6 +338,32 @@ update msg model =
 
         DecodeIncomingJson ->
             ( decodeIncomingJson model, Cmd.none )
+
+        MoveAppInput direction index ->
+            let
+                app =
+                    model.app
+
+                newInputs =
+                    alterDisplayOrder direction index app.inputs
+
+                newApp =
+                    { app | inputs = newInputs }
+            in
+            ( { model | app = newApp }, Cmd.none )
+
+        MoveAppParam direction index ->
+            let
+                app =
+                    model.app
+
+                newParams =
+                    alterDisplayOrder direction index app.parameters
+
+                newApp =
+                    { app | parameters = newParams }
+            in
+            ( { model | app = newApp }, Cmd.none )
 
         OpenModifyAppInputDialog newInput ->
             ( { model
@@ -783,14 +816,30 @@ update msg model =
 
         UpdateAppParamDefaultValue val ->
             let
+                toBool s =
+                    String.toUpper s == "TRUE"
+
                 newParam =
-                    Maybe.map
-                        (\x ->
-                            { x
-                                | defaultValue = AppParamDefaultValString val
-                            }
-                        )
-                        model.paramToModify
+                    case model.paramToModify of
+                        Just p ->
+                            let
+                                newVal =
+                                    case p.paramType of
+                                        BoolParam ->
+                                            AppParamDefaultValBool
+                                                (toBool val)
+
+                                        FlagParam ->
+                                            AppParamDefaultValBool
+                                                (toBool val)
+
+                                        _ ->
+                                            AppParamDefaultValString val
+                            in
+                            Just { p | defaultValue = newVal }
+
+                        _ ->
+                            Nothing
             in
             ( { model | paramToModify = newParam }, Cmd.none )
 
@@ -1389,6 +1438,35 @@ encodeApp app =
         )
 
 
+alterDisplayOrder direction indexToMove list =
+    List.sortBy (\i -> i.displayOrder)
+        (List.indexedMap
+            (\thisIndex this ->
+                let
+                    newOrder =
+                        case direction of
+                            Up ->
+                                if thisIndex == indexToMove - 1 then
+                                    this.displayOrder + 1
+                                else if thisIndex == indexToMove then
+                                    this.displayOrder - 1
+                                else
+                                    this.displayOrder
+
+                            Down ->
+                                if thisIndex == indexToMove + 1 then
+                                    this.displayOrder - 1
+                                else if thisIndex == indexToMove then
+                                    this.displayOrder + 1
+                                else
+                                    this.displayOrder
+                in
+                { this | displayOrder = newOrder }
+            )
+            list
+        )
+
+
 paneInputs : Model -> Html Msg
 paneInputs model =
     let
@@ -1588,10 +1666,19 @@ modifyAppParamDialog model =
                 defVal =
                     case param.defaultValue of
                         AppParamDefaultValString s ->
-                            s
+                            mkRowTextEntry "Default Value"
+                                s
+                                UpdateAppParamDefaultValue
 
                         AppParamDefaultValBool b ->
-                            toString b
+                            let
+                                v =
+                                    toString b
+                            in
+                            mkRowSelect "Default Value"
+                                [ "True", "False" ]
+                                v
+                                UpdateAppParamDefaultValue
             in
             div []
                 [ err
@@ -1631,9 +1718,7 @@ modifyAppParamDialog model =
                                 (paramTypeToString param.paramType)
                                 UpdateAppParamType
                             , showEnumValues param
-                            , mkRowTextEntry "Default Value"
-                                defVal
-                                UpdateAppParamDefaultValue
+                            , defVal
                             , mkRowTextEntry "Validator"
                                 param.validator
                                 UpdateAppParamValidator
@@ -1779,6 +1864,9 @@ appInputsTable inputs =
             else
                 "✗"
 
+        lastInput =
+            List.length inputs - 1
+
         inputTr index input =
             tr []
                 [ td [] [ text input.id ]
@@ -1787,7 +1875,6 @@ appInputsTable inputs =
                 , td [] [ text input.argument ]
                 , td [] [ text input.defaultValue ]
                 , td [] [ text (checkIfTrue input.required) ]
-                , td [] [ text (checkIfTrue input.visible) ]
                 , td []
                     [ button
                         [ class "btn btn-default"
@@ -1802,6 +1889,22 @@ appInputsTable inputs =
                         ]
                         [ text "Delete" ]
                     ]
+                , td []
+                    [ button
+                        [ class "btn btn-default"
+                        , onClick (MoveAppInput Up index)
+                        , disabled (index == 0)
+                        ]
+                        [ text "^" ]
+                    ]
+                , td []
+                    [ button
+                        [ class "btn btn-default"
+                        , onClick (MoveAppInput Down index)
+                        , disabled (index == lastInput)
+                        ]
+                        [ text "v" ]
+                    ]
                 ]
 
         tbl =
@@ -1814,7 +1917,10 @@ appInputsTable inputs =
                         , th [] [ text "Arg" ]
                         , th [] [ text "Val" ]
                         , th [] [ text "Required" ]
-                        , th [] [ text "Visible" ]
+                        , th [] [ text "" ]
+                        , th [] [ text "" ]
+                        , th [] [ text "" ]
+                        , th [] [ text "" ]
                         ]
                     ]
                 , tbody []
@@ -1846,6 +1952,9 @@ appParamsTable params =
                 AppParamDefaultValBool b ->
                     toString b
 
+        lastParam =
+            List.length params - 1
+
         paramTr index param =
             tr []
                 [ td [] [ text param.id ]
@@ -1855,18 +1964,35 @@ appParamsTable params =
                 , td [] [ text param.argument ]
                 , td [] [ text (defVal param) ]
                 , td [] [ text (checkIfTrue param.required) ]
-                , td [] [ text (checkIfTrue param.visible) ]
                 , td []
                     [ button
                         [ class "btn btn-default"
                         , onClick (SetAppParamToModify index)
                         ]
                         [ text "Edit" ]
-                    , button
+                    ]
+                , td []
+                    [ button
                         [ class "btn btn-default"
                         , onClick (DeleteAppParam index)
                         ]
                         [ text "Delete" ]
+                    ]
+                , td []
+                    [ button
+                        [ class "btn btn-default"
+                        , onClick (MoveAppParam Up index)
+                        , disabled (index == 0)
+                        ]
+                        [ text "^" ]
+                    ]
+                , td []
+                    [ button
+                        [ class "btn btn-default"
+                        , onClick (MoveAppParam Down index)
+                        , disabled (index == lastParam)
+                        ]
+                        [ text "v" ]
                     ]
                 ]
 
@@ -1881,7 +2007,9 @@ appParamsTable params =
                         , th [] [ text "Arg" ]
                         , th [] [ text "Val" ]
                         , th [] [ text "Required" ]
-                        , th [] [ text "Visible" ]
+                        , th [] [ text "" ]
+                        , th [] [ text "" ]
+                        , th [] [ text "" ]
                         ]
                     ]
                 , tbody []
@@ -2079,8 +2207,7 @@ mkRadio ( value, state, msg ) =
 paneJson : Model -> Html Msg
 paneJson model =
     div []
-        [ pre [] [ text (toString model.app) ]
-        , textarea
+        [ textarea
             [ defaultValue (encodeApp model.app)
             , onInput UpdateIncomingJson
             , cols 100
