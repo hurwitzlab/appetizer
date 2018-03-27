@@ -5,6 +5,7 @@ import Bootstrap.Tab as Tab
 import Dialog
 import Dict
 import Html exposing (..)
+import Html.Keyed as Keyed
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Decode exposing (Decoder, at)
@@ -15,6 +16,7 @@ import Reorderable as R
 
 
 ---- MODEL ----
+-- http://developer.agaveapi.co/#inputs-and-parameters
 
 
 type alias Model =
@@ -29,6 +31,7 @@ type alias Model =
     , error : Maybe String
     , appInputError : Maybe String
     , appParamError : Maybe String
+    , nodeCounter : Int
     }
 
 
@@ -117,6 +120,7 @@ type Direction
 
 type AppParamDefaultValue
     = AppParamDefaultValString String
+    | AppParamDefaultValNumber Float
     | AppParamDefaultValBool Bool
 
 
@@ -140,6 +144,7 @@ initialModel =
     , error = Nothing
     , appInputError = Nothing
     , appParamError = Nothing
+    , nodeCounter = 0
     }
 
 
@@ -230,12 +235,13 @@ type Msg
     | CloseModifyAppInputDialog
     | DeleteAppInput Int
     | DeleteAppParam Int
-    | DecodeIncomingJson String
+    | DecodeIncomingJson
     | TabMsg Tab.State
     | MoveAppInput Direction Int
     | MoveAppParam Direction Int
     | OpenModifyAppInputDialog AppInput
     | OpenModifyAppParamDialog AppParam
+    | RefreshJson
     | SaveAppInput
     | SaveAppParam
     | SetAppInputToModify Int
@@ -298,6 +304,7 @@ type Msg
     | UpdateAppTemplatePath String
     | UpdateAppTestPath String
     | UpdateAppVersion String
+    | UpdateIncomingJson String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -338,8 +345,8 @@ update msg model =
             in
                 ( { model | app = newApp }, Cmd.none )
 
-        DecodeIncomingJson json ->
-            ( decodeIncomingJson model json, Cmd.none )
+        DecodeIncomingJson ->
+            ( decodeIncomingJson model, Cmd.none )
 
         MoveAppInput direction index ->
             let
@@ -383,6 +390,9 @@ update msg model =
             , Cmd.none
             )
 
+        RefreshJson ->
+            ( { model | nodeCounter = model.nodeCounter + 1 }, Cmd.none )
+
         SaveAppInput ->
             let
                 newInputs =
@@ -410,6 +420,7 @@ update msg model =
                     | app = newApp
                     , inputToModify = Nothing
                     , editingAppInputId = ""
+                    , nodeCounter = model.nodeCounter + 1
                   }
                 , Cmd.none
                 )
@@ -441,6 +452,7 @@ update msg model =
                     | app = newApp
                     , paramToModify = Nothing
                     , editingAppParamId = ""
+                    , nodeCounter = model.nodeCounter + 1
                   }
                 , Cmd.none
                 )
@@ -822,29 +834,43 @@ update msg model =
                 toBool s =
                     String.toUpper s == "TRUE"
 
-                newParam =
+                ( newParam, newError ) =
                     case model.paramToModify of
                         Just p ->
                             let
-                                newVal =
+                                ( newVal, newError ) =
                                     case p.paramType of
                                         BoolParam ->
-                                            AppParamDefaultValBool
+                                            ( AppParamDefaultValBool
                                                 (toBool val)
+                                            , Nothing
+                                            )
 
                                         FlagParam ->
-                                            AppParamDefaultValBool
+                                            ( AppParamDefaultValBool
                                                 (toBool val)
+                                            , Nothing
+                                            )
+
+                                        NumberParam ->
+                                            case String.toFloat val of
+                                                Ok n ->
+                                                    ( AppParamDefaultValNumber n, Nothing )
+
+                                                Err e ->
+                                                    ( p.defaultValue, Just e )
 
                                         _ ->
-                                            AppParamDefaultValString val
+                                            ( AppParamDefaultValString val, Nothing )
                             in
-                                Just { p | defaultValue = newVal }
+                                ( Just { p | defaultValue = newVal }, newError )
 
                         _ ->
-                            Nothing
+                            ( Nothing, Nothing )
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+                ( { model | paramToModify = newParam, error = newError }
+                , Cmd.none
+                )
 
         UpdateAppParamDescription val ->
             let
@@ -968,34 +994,48 @@ update msg model =
 
         UpdateAppParamType val ->
             let
-                ( newType, newErr ) =
+                newType =
                     case val of
-                        "String" ->
-                            ( StringParam, Nothing )
-
                         "Number" ->
-                            ( NumberParam, Nothing )
+                            NumberParam
 
                         "Enum" ->
-                            ( EnumerationParam, Nothing )
+                            EnumerationParam
 
                         "Boolean" ->
-                            ( BoolParam, Nothing )
+                            BoolParam
 
                         "Flag" ->
-                            ( FlagParam, Nothing )
+                            FlagParam
 
                         _ ->
-                            ( StringParam, Just "Unknown parameter type" )
+                            StringParam
+
+                newDefaultValue =
+                    case newType of
+                        BoolParam ->
+                            AppParamDefaultValBool True
+
+                        FlagParam ->
+                            AppParamDefaultValBool True
+
+                        NumberParam ->
+                            AppParamDefaultValNumber 0
+
+                        _ ->
+                            AppParamDefaultValString ""
 
                 newParam =
                     Maybe.map
-                        (\param -> { param | paramType = newType })
+                        (\param ->
+                            { param
+                                | paramType = newType
+                                , defaultValue = newDefaultValue
+                            }
+                        )
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam, appParamError = newErr }
-                , Cmd.none
-                )
+                ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamValidator val ->
             let
@@ -1254,6 +1294,9 @@ update msg model =
             in
                 ( { model | app = newApp }, Cmd.none )
 
+        UpdateIncomingJson json ->
+            ( { model | incomingJson = json }, Cmd.none )
+
 
 
 ---- VIEW ----
@@ -1323,6 +1366,9 @@ encodeApp app =
 
                 defValue =
                     case param.defaultValue of
+                        AppParamDefaultValNumber n ->
+                            JE.float n
+
                         AppParamDefaultValString s ->
                             JE.string s
 
@@ -1622,22 +1668,40 @@ modifyAppParamDialog model =
                             div [ class "alert alert-danger" ]
                                 [ text ("Error: " ++ e) ]
 
-                defVal =
-                    case param.defaultValue of
-                        AppParamDefaultValString s ->
+                mkBool val =
+                    mkRowSelect "Default Value"
+                        [ "True", "False" ]
+                        val
+                        UpdateAppParamDefaultValue
+
+                defValEntry =
+                    case param.paramType of
+                        BoolParam ->
+                            mkBool defVal
+
+                        FlagParam ->
+                            mkBool defVal
+
+                        NumberParam ->
                             mkRowTextEntry "Default Value"
-                                s
+                                defVal
                                 UpdateAppParamDefaultValue
 
+                        _ ->
+                            mkRowTextEntry "Default Value"
+                                defVal
+                                UpdateAppParamDefaultValue
+
+                defVal =
+                    case param.defaultValue of
+                        AppParamDefaultValNumber n ->
+                            toString n
+
                         AppParamDefaultValBool b ->
-                            let
-                                v =
-                                    toString b
-                            in
-                                mkRowSelect "Default Value"
-                                    [ "True", "False" ]
-                                    v
-                                    UpdateAppParamDefaultValue
+                            toString b
+
+                        AppParamDefaultValString v ->
+                            v
             in
                 div []
                     [ err
@@ -1677,7 +1741,7 @@ modifyAppParamDialog model =
                                     (paramTypeToString param.paramType)
                                     UpdateAppParamType
                                 , showEnumValues param
-                                , defVal
+                                , defValEntry
                                 , mkRowTextEntry "Validator"
                                     param.validator
                                     UpdateAppParamValidator
@@ -1939,6 +2003,9 @@ appParamsTable params =
                 AppParamDefaultValString s ->
                     s
 
+                AppParamDefaultValNumber n ->
+                    toString n
+
                 AppParamDefaultValBool b ->
                     toString b
 
@@ -2197,13 +2264,26 @@ mkRadio ( value, state, msg ) =
 paneJson : Model -> Html Msg
 paneJson model =
     div []
-        [ textarea
-            [ value (encodeApp model.app)
-            , onInput DecodeIncomingJson
-            , cols 100
-            , rows 40
-            ]
+        [ Keyed.node "div"
             []
+            [ ( toString model.nodeCounter
+              , textarea
+                    [ defaultValue (encodeApp model.app)
+                    , onInput UpdateIncomingJson
+                    , cols 100
+                    , rows 40
+                    ]
+                    []
+              )
+            ]
+        , div []
+            [ button [ class "btn btn-primary", onClick RefreshJson ]
+                [ text "Refresh" ]
+            ]
+        , div []
+            [ button [ class "btn btn-primary", onClick DecodeIncomingJson ]
+                [ text "Update App" ]
+            ]
         ]
 
 
@@ -2370,7 +2450,7 @@ decoderAppParam : Decoder AppParam
 decoderAppParam =
     decode AppParam
         |> Pipeline.required "id" Decode.string
-        |> Pipeline.optionalAt [ "value", "default" ]
+        |> Pipeline.optionalAt [ "value", "type" ]
             decoderAppParamDefaultValue
             (AppParamDefaultValString "")
         |> Pipeline.optionalAt [ "value", "type" ]
@@ -2395,8 +2475,18 @@ decoderAppParam =
 
 decoderAppParamDefaultValue =
     Decode.oneOf
-        [ Decode.string |> Decode.andThen (\s -> Decode.succeed (AppParamDefaultValString s))
-        , Decode.bool |> Decode.andThen (\b -> Decode.succeed (AppParamDefaultValBool b))
+        [ Decode.string
+            |> Decode.andThen
+                (\s -> Decode.succeed (AppParamDefaultValString s))
+        , Decode.float
+            |> Decode.andThen
+                (\f -> Decode.succeed (AppParamDefaultValNumber f))
+        , Decode.int
+            |> Decode.andThen
+                (\i -> Decode.succeed (AppParamDefaultValNumber (toFloat i)))
+        , Decode.bool
+            |> Decode.andThen
+                (\b -> Decode.succeed (AppParamDefaultValBool b))
         ]
 
 
@@ -2438,11 +2528,11 @@ decoderAppParamType =
             )
 
 
-decodeIncomingJson : Model -> String -> Model
-decodeIncomingJson model json =
+decodeIncomingJson : Model -> Model
+decodeIncomingJson model =
     let
         ( newApp, err ) =
-            case Decode.decodeString decoderApp json of
+            case Decode.decodeString decoderApp model.incomingJson of
                 Ok a ->
                     ( a, Nothing )
 
