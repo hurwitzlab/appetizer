@@ -1343,6 +1343,14 @@ encodeApp app =
 
         paramValueSection param =
             let
+                validator =
+                    case param.paramType of
+                        EnumerationParam ->
+                            []
+
+                        _ ->
+                            [ ( "validator", JE.string param.validator ) ]
+
                 enumVals =
                     case param.paramType of
                         EnumerationParam ->
@@ -1383,11 +1391,11 @@ encodeApp app =
                         )
                   )
                 , ( "order", JE.int param.displayOrder )
-                , ( "validator", JE.string param.validator )
                 , ( "required", JE.bool param.required )
                 , ( "visible", JE.bool param.visible )
                 , ( "enquote", JE.bool param.enquoteValue )
                 ]
+                    ++ validator
                     ++ enumVals
 
         encodeParameter param =
@@ -2381,7 +2389,7 @@ paramTypeToString paramType =
             "Number"
 
         EnumerationParam ->
-            "Enum"
+            "Enumeration"
 
         BoolParam ->
             "Boolean"
