@@ -5,7 +5,6 @@ import Bootstrap.Tab as Tab
 import Dialog
 import Dict
 import Html exposing (..)
-import Html.Keyed as Keyed
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Decode exposing (Decoder, at)
@@ -21,16 +20,16 @@ import Reorderable as R
 
 type alias Model =
     { app : App
-    , showJson : Bool
     , tabState : Tab.State
     , editingAppInputId : String
     , editingAppParamId : String
     , inputToModify : Maybe AppInput
     , paramToModify : Maybe AppParam
-    , incomingJson : String
+    , incomingJson : Maybe String
     , error : Maybe String
     , appInputError : Maybe String
     , appParamError : Maybe String
+    , jsonError : Maybe String
     , nodeCounter : Int
     }
 
@@ -134,16 +133,16 @@ type AppParamType
 
 initialModel =
     { app = initialApp
-    , showJson = False
     , tabState = Tab.initialState
     , inputToModify = Nothing
     , paramToModify = Nothing
     , editingAppInputId = ""
     , editingAppParamId = ""
-    , incomingJson = ""
+    , incomingJson = Nothing
     , error = Nothing
     , appInputError = Nothing
     , appParamError = Nothing
+    , jsonError = Nothing
     , nodeCounter = 0
     }
 
@@ -320,7 +319,7 @@ update msg model =
             ( { model | paramToModify = Nothing }, Cmd.none )
 
         CloseJsonDialog ->
-            ( { model | showJson = False }, Cmd.none )
+            ( { model | incomingJson = Nothing }, Cmd.none )
 
         CloseModifyAppInputDialog ->
             ( { model | inputToModify = Nothing }, Cmd.none )
@@ -346,7 +345,19 @@ update msg model =
                 ( { model | app = newApp }, Cmd.none )
 
         DecodeIncomingJson ->
-            ( decodeIncomingJson model, Cmd.none )
+            let
+                newModel =
+                    decodeIncomingJson model
+
+                newJson =
+                    case newModel.jsonError of
+                        Nothing ->
+                            Nothing
+
+                        _ ->
+                            model.incomingJson
+            in
+                ( { newModel | incomingJson = newJson }, Cmd.none )
 
         MoveAppInput direction index ->
             let
@@ -498,7 +509,9 @@ update msg model =
                 )
 
         ShowJsonDialog ->
-            ( { model | showJson = True }, Cmd.none )
+            ( { model | incomingJson = Just (encodeApp model.app) }
+            , Cmd.none
+            )
 
         TabMsg state ->
             ( { model | tabState = state }
@@ -1295,7 +1308,7 @@ update msg model =
                 ( { model | app = newApp }, Cmd.none )
 
         UpdateIncomingJson json ->
-            ( { model | incomingJson = json }, Cmd.none )
+            ( { model | incomingJson = Just json }, Cmd.none )
 
 
 
@@ -2272,27 +2285,67 @@ mkRadio ( value, state, msg ) =
 paneJson : Model -> Html Msg
 paneJson model =
     div []
-        [ Keyed.node "div"
-            []
-            [ ( toString model.nodeCounter
-              , textarea
-                    [ defaultValue (encodeApp model.app)
-                    , onInput UpdateIncomingJson
-                    , cols 100
-                    , rows 40
-                    ]
-                    []
-              )
+        [ div [ style [ ( "text-align", "center" ) ] ]
+            [ button [ class "btn btn-primary", onClick ShowJsonDialog ]
+                [ text "Manual Edit" ]
             ]
-        , div []
-            [ button [ class "btn btn-primary", onClick RefreshJson ]
-                [ text "Refresh" ]
-            ]
-        , div []
-            [ button [ class "btn btn-primary", onClick DecodeIncomingJson ]
-                [ text "Update App" ]
-            ]
+        , br [] []
+        , pre [] [ text (encodeApp model.app) ]
+        , modifyJsonDialog model
         ]
+
+
+modifyJsonDialog : Model -> Html Msg
+modifyJsonDialog model =
+    let
+        err =
+            case model.jsonError of
+                Nothing ->
+                    div [] [ text "" ]
+
+                Just e ->
+                    div [ class "alert alert-danger" ]
+                        [ text ("Error: " ++ e) ]
+
+        body =
+            div []
+                [ err
+                , textarea
+                    [ cols 80, rows 30, onInput UpdateIncomingJson ]
+                    [ text (encodeApp model.app) ]
+                ]
+    in
+        Dialog.view
+            (case model.incomingJson of
+                Just json ->
+                    Just
+                        { closeMessage = Nothing
+                        , containerClass = Nothing
+                        , header = Just (text "Edit JSON")
+                        , body = Just body
+                        , footer =
+                            Just
+                                (div
+                                    []
+                                    [ button
+                                        [ class "btn btn-primary"
+                                        , type_ "button"
+                                        , onClick DecodeIncomingJson
+                                        ]
+                                        [ text "Save" ]
+                                    , button
+                                        [ class "btn btn-default"
+                                        , type_ "button"
+                                        , onClick CloseJsonDialog
+                                        ]
+                                        [ text "Cancel" ]
+                                    ]
+                                )
+                        }
+
+                _ ->
+                    Nothing
+            )
 
 
 paneMain : App -> Html Msg
@@ -2540,14 +2593,19 @@ decodeIncomingJson : Model -> Model
 decodeIncomingJson model =
     let
         ( newApp, err ) =
-            case Decode.decodeString decoderApp model.incomingJson of
-                Ok a ->
-                    ( a, Nothing )
+            case model.incomingJson of
+                Just json ->
+                    case Decode.decodeString decoderApp json of
+                        Ok a ->
+                            ( a, Nothing )
 
-                Err e ->
-                    ( model.app, Just e )
+                        Err e ->
+                            ( model.app, Just e )
+
+                _ ->
+                    ( model.app, Just "No JSON" )
     in
-        { model | app = newApp, error = err }
+        { model | app = newApp, jsonError = err }
 
 
 
