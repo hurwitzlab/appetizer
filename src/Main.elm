@@ -30,7 +30,6 @@ type alias Model =
     , appInputError : Maybe String
     , appParamError : Maybe String
     , jsonError : Maybe String
-    , nodeCounter : Int
     }
 
 
@@ -143,7 +142,6 @@ initialModel =
     , appInputError = Nothing
     , appParamError = Nothing
     , jsonError = Nothing
-    , nodeCounter = 0
     }
 
 
@@ -240,7 +238,6 @@ type Msg
     | MoveAppParam Direction Int
     | OpenModifyAppInputDialog AppInput
     | OpenModifyAppParamDialog AppParam
-    | RefreshJson
     | SaveAppInput
     | SaveAppParam
     | SetAppInputToModify Int
@@ -401,9 +398,6 @@ update msg model =
             , Cmd.none
             )
 
-        RefreshJson ->
-            ( { model | nodeCounter = model.nodeCounter + 1 }, Cmd.none )
-
         SaveAppInput ->
             let
                 newInputs =
@@ -431,7 +425,6 @@ update msg model =
                     | app = newApp
                     , inputToModify = Nothing
                     , editingAppInputId = ""
-                    , nodeCounter = model.nodeCounter + 1
                   }
                 , Cmd.none
                 )
@@ -463,7 +456,6 @@ update msg model =
                     | app = newApp
                     , paramToModify = Nothing
                     , editingAppParamId = ""
-                    , nodeCounter = model.nodeCounter + 1
                   }
                 , Cmd.none
                 )
