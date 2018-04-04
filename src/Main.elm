@@ -2174,6 +2174,15 @@ view model =
                                 , paneJson model
                                 ]
                         }
+                    , Tab.item
+                        { id = "tabHelp"
+                        , link = Tab.link [] [ text "Help" ]
+                        , pane =
+                            Tab.pane []
+                                [ br [] []
+                                , paneHelp
+                                ]
+                        }
                     ]
                 |> Tab.view model.tabState
             ]
@@ -2272,6 +2281,54 @@ mkRadio ( value, state, msg ) =
             []
         , text value
         ]
+
+
+paneHelp : Html Msg
+paneHelp =
+    let
+        helpUrl =
+            "http://developer.agaveapi.co/#inputs-and-parameters"
+    in
+        div []
+            [ h2 [] [ text "Docs" ]
+            , text
+                ("This interface is intended to help you to describe all the "
+                    ++ "command-line arguments for a tool you wish to encode "
+                    ++ "as an app. It will generate the JSON needed to "
+                    ++ "describe the app to the Agave API. The official "
+                    ++ "documentation is available at "
+                )
+            , a [ href helpUrl ] [ text helpUrl ]
+            , text "."
+            , h2 [] [ text "Main" ]
+            , text "Basic information we need about your tool."
+            , h2 [] [ text "Inputs" ]
+            , text
+                ("Input are assets from the user that must be transferred "
+                    ++ "to the compute nodes for your app to run."
+                )
+            , h2 [] [ text "Parameters" ]
+            , text "Parameters describe how the app will behave."
+            , h2 [] [ text "Advanced" ]
+            , text
+                ("These are options to be configured by our developers, "
+                    ++ "so you can safely ignore anything that doesn't make "
+                    ++ "sense to you."
+                )
+            , h2 [] [ text "JSON" ]
+            , text
+                ("Once you have used the form to describe your app, "
+                    ++ "you can view/copy the JSON from this tab into a text "
+                    ++ "file that you can provide as an argument to "
+                    ++ "apps-add-update."
+                )
+            , br [] []
+            , text
+                ("You can also click the Manual Edit button to tweak the "
+                    ++ "JSON by hand or paste in an existing app's JSON "
+                    ++ "definition in order to edit it."
+                )
+            ]
 
 
 paneJson : Model -> Html Msg
