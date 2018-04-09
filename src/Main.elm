@@ -873,7 +873,7 @@ update msg model =
                         _ ->
                             ( Nothing, Nothing )
             in
-                ( { model | paramToModify = newParam, error = newError }
+                ( { model | paramToModify = newParam, appParamError = newError }
                 , Cmd.none
                 )
 
@@ -1004,7 +1004,7 @@ update msg model =
                         "Number" ->
                             NumberParam
 
-                        "Enum" ->
+                        "Enumeration" ->
                             EnumerationParam
 
                         "Boolean" ->
@@ -2560,7 +2560,7 @@ decoderAppParam : Decoder AppParam
 decoderAppParam =
     decode AppParam
         |> Pipeline.required "id" Decode.string
-        |> Pipeline.optionalAt [ "value", "type" ]
+        |> Pipeline.optionalAt [ "value", "default" ]
             decoderAppParamDefaultValue
             (AppParamDefaultValString "")
         |> Pipeline.optionalAt [ "value", "type" ]
