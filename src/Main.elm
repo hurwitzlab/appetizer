@@ -329,7 +329,7 @@ update msg model =
                 newApp =
                     { app | inputs = removeAt index app.inputs }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         DeleteAppParam index ->
             let
@@ -339,7 +339,7 @@ update msg model =
                 newApp =
                     { app | parameters = removeAt index app.parameters }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         DecodeIncomingJson ->
             let
@@ -354,7 +354,7 @@ update msg model =
                         _ ->
                             model.incomingJson
             in
-                ( { newModel | incomingJson = newJson }, Cmd.none )
+            ( { newModel | incomingJson = newJson }, Cmd.none )
 
         MoveAppInput direction index ->
             let
@@ -367,7 +367,7 @@ update msg model =
                 newApp =
                     { app | inputs = newInputs }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         MoveAppParam direction index ->
             let
@@ -380,7 +380,7 @@ update msg model =
                 newApp =
                     { app | parameters = newParams }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         OpenModifyAppInputDialog newInput ->
             ( { model
@@ -409,8 +409,8 @@ update msg model =
                                         (\x -> x.id == model.editingAppInputId)
                                         model.app.inputs
                             in
-                                List.sortBy (\x -> x.displayOrder)
-                                    (input :: notThis)
+                            List.sortBy (\x -> x.displayOrder)
+                                (input :: notThis)
 
                         _ ->
                             model.app.inputs
@@ -421,13 +421,13 @@ update msg model =
                 newApp =
                     { curApp | inputs = newInputs }
             in
-                ( { model
-                    | app = newApp
-                    , inputToModify = Nothing
-                    , editingAppInputId = ""
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | app = newApp
+                , inputToModify = Nothing
+                , editingAppInputId = ""
+              }
+            , Cmd.none
+            )
 
         SaveAppParam ->
             let
@@ -440,8 +440,8 @@ update msg model =
                                         (\x -> x.id == model.editingAppParamId)
                                         model.app.parameters
                             in
-                                List.sortBy (\x -> x.displayOrder)
-                                    (param :: notThis)
+                            List.sortBy (\x -> x.displayOrder)
+                                (param :: notThis)
 
                         _ ->
                             model.app.parameters
@@ -452,13 +452,13 @@ update msg model =
                 newApp =
                     { curApp | parameters = newParams }
             in
-                ( { model
-                    | app = newApp
-                    , paramToModify = Nothing
-                    , editingAppParamId = ""
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | app = newApp
+                , paramToModify = Nothing
+                , editingAppParamId = ""
+              }
+            , Cmd.none
+            )
 
         SetAppInputToModify index ->
             let
@@ -473,12 +473,12 @@ update msg model =
                         _ ->
                             ""
             in
-                ( { model
-                    | inputToModify = newInput
-                    , editingAppInputId = inputId
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | inputToModify = newInput
+                , editingAppInputId = inputId
+              }
+            , Cmd.none
+            )
 
         SetAppParamToModify index ->
             let
@@ -493,12 +493,12 @@ update msg model =
                         _ ->
                             ""
             in
-                ( { model
-                    | paramToModify = newParam
-                    , editingAppParamId = paramId
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | paramToModify = newParam
+                , editingAppParamId = paramId
+              }
+            , Cmd.none
+            )
 
         ShowJsonDialog ->
             ( { model | incomingJson = Just (encodeApp model.app) }
@@ -518,7 +518,7 @@ update msg model =
                 newApp =
                     { app | available = not app.available }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         ToggleAppCheckpointable ->
             let
@@ -528,7 +528,7 @@ update msg model =
                 newApp =
                     { app | checkpointable = not app.checkpointable }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppInputArgument val ->
             let
@@ -536,7 +536,7 @@ update msg model =
                     Maybe.map (\input -> { input | argument = val })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputDefaultValue val ->
             let
@@ -544,7 +544,7 @@ update msg model =
                     Maybe.map (\input -> { input | defaultValue = val })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputDescription val ->
             let
@@ -552,7 +552,7 @@ update msg model =
                     Maybe.map (\input -> { input | description = val })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputDisplayOrder val ->
             let
@@ -570,19 +570,19 @@ update msg model =
                                             , Just e
                                             )
                             in
-                                ( Just
-                                    { input
-                                        | displayOrder = newDisplayOrder
-                                    }
-                                , err
-                                )
+                            ( Just
+                                { input
+                                    | displayOrder = newDisplayOrder
+                                }
+                            , err
+                            )
 
                         _ ->
                             ( Nothing, Nothing )
             in
-                ( { model | inputToModify = newInput, appInputError = newError }
-                , Cmd.none
-                )
+            ( { model | inputToModify = newInput, appInputError = newError }
+            , Cmd.none
+            )
 
         UpdateAppInputFileTypes val ->
             let
@@ -593,7 +593,7 @@ update msg model =
                     Maybe.map (\input -> { input | fileTypes = newFileTypes })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputId val ->
             let
@@ -601,7 +601,7 @@ update msg model =
                     Maybe.map (\input -> { input | id = val })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputLabel val ->
             let
@@ -609,7 +609,7 @@ update msg model =
                     Maybe.map (\input -> { input | label = val })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputMaxCardinality val ->
             let
@@ -625,17 +625,17 @@ update msg model =
                                         Err e ->
                                             ( input.maxCardinality, Just e )
                             in
-                                ( Just
-                                    { input | maxCardinality = newVal }
-                                , err
-                                )
+                            ( Just
+                                { input | maxCardinality = newVal }
+                            , err
+                            )
 
                         _ ->
                             ( Nothing, Nothing )
             in
-                ( { model | inputToModify = newInput, appInputError = newError }
-                , Cmd.none
-                )
+            ( { model | inputToModify = newInput, appInputError = newError }
+            , Cmd.none
+            )
 
         UpdateAppInputMinCardinality val ->
             let
@@ -651,22 +651,22 @@ update msg model =
                                         Err e ->
                                             ( input.minCardinality, Just e )
                             in
-                                ( Just
-                                    { input
-                                        | minCardinality = newVal
-                                    }
-                                , err
-                                )
+                            ( Just
+                                { input
+                                    | minCardinality = newVal
+                                }
+                            , err
+                            )
 
                         _ ->
                             ( Nothing, Nothing )
             in
-                ( { model
-                    | inputToModify = newInput
-                    , appInputError = newError
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | inputToModify = newInput
+                , appInputError = newError
+              }
+            , Cmd.none
+            )
 
         UpdateAppInputToggleEnquoteValue ->
             let
@@ -679,7 +679,7 @@ update msg model =
                         )
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputToggleRepeatArgument ->
             let
@@ -692,7 +692,7 @@ update msg model =
                         )
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputToggleRequired ->
             let
@@ -703,7 +703,7 @@ update msg model =
                         )
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputToggleShowArgument ->
             let
@@ -716,7 +716,7 @@ update msg model =
                         )
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputToggleVisible ->
             let
@@ -725,7 +725,7 @@ update msg model =
                         (\input -> { input | visible = not input.visible })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputValidator val ->
             let
@@ -733,7 +733,7 @@ update msg model =
                     Maybe.map (\input -> { input | validator = val })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppInputOntology val ->
             let
@@ -744,7 +744,7 @@ update msg model =
                     Maybe.map (\input -> { input | ontology = newOntology })
                         model.inputToModify
             in
-                ( { model | inputToModify = newInput }, Cmd.none )
+            ( { model | inputToModify = newInput }, Cmd.none )
 
         UpdateAppParamAddEnum ->
             let
@@ -780,13 +780,13 @@ update msg model =
                                 _ ->
                                     param.enumValues
                     in
-                        { param
-                            | enumValues = newEnums
-                            , inputEnumKey = newEnumKey
-                            , inputEnumValue = newEnumValue
-                        }
+                    { param
+                        | enumValues = newEnums
+                        , inputEnumKey = newEnumKey
+                        , inputEnumValue = newEnumValue
+                    }
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamArgument val ->
             let
@@ -794,7 +794,7 @@ update msg model =
                     Maybe.map (\x -> { x | argument = val })
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamDeleteEnumValue index ->
             let
@@ -804,7 +804,7 @@ update msg model =
                 deleteEnum index param =
                     { param | enumValues = removeAt index param.enumValues }
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamDisplayOrder val ->
             let
@@ -820,19 +820,19 @@ update msg model =
                                         Err e ->
                                             ( param.displayOrder, Just e )
                             in
-                                ( Just
-                                    { param
-                                        | displayOrder = newDisplayOrder
-                                    }
-                                , err
-                                )
+                            ( Just
+                                { param
+                                    | displayOrder = newDisplayOrder
+                                }
+                            , err
+                            )
 
                         _ ->
                             ( Nothing, Nothing )
             in
-                ( { model | paramToModify = newParam, appParamError = newError }
-                , Cmd.none
-                )
+            ( { model | paramToModify = newParam, appParamError = newError }
+            , Cmd.none
+            )
 
         UpdateAppParamDefaultValue val ->
             let
@@ -868,14 +868,14 @@ update msg model =
                                         _ ->
                                             ( AppParamDefaultValString val, Nothing )
                             in
-                                ( Just { p | defaultValue = newVal }, newError )
+                            ( Just { p | defaultValue = newVal }, newError )
 
                         _ ->
                             ( Nothing, Nothing )
             in
-                ( { model | paramToModify = newParam, appParamError = newError }
-                , Cmd.none
-                )
+            ( { model | paramToModify = newParam, appParamError = newError }
+            , Cmd.none
+            )
 
         UpdateAppParamDescription val ->
             let
@@ -883,7 +883,7 @@ update msg model =
                     Maybe.map (\x -> { x | description = val })
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamEnumKey val ->
             let
@@ -891,7 +891,7 @@ update msg model =
                     Maybe.map (\param -> { param | inputEnumKey = val })
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamEnumValue val ->
             let
@@ -899,7 +899,7 @@ update msg model =
                     Maybe.map (\param -> { param | inputEnumValue = val })
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamId val ->
             let
@@ -907,7 +907,7 @@ update msg model =
                     Maybe.map (\param -> { param | id = val })
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamLabel val ->
             let
@@ -915,7 +915,7 @@ update msg model =
                     Maybe.map (\x -> { x | label = val })
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamMoveEnumValue direction index ->
             let
@@ -930,7 +930,7 @@ update msg model =
                                 R.moveUp 1 (R.fromList param.enumValues)
                     }
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamToggleEnquoteValue ->
             let
@@ -943,7 +943,7 @@ update msg model =
                         )
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamToggleRequired ->
             let
@@ -956,7 +956,7 @@ update msg model =
                         )
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamToggleRepeatArgument ->
             let
@@ -969,7 +969,7 @@ update msg model =
                         )
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamToggleShowArgument ->
             let
@@ -982,7 +982,7 @@ update msg model =
                         )
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamToggleVisible ->
             let
@@ -995,7 +995,7 @@ update msg model =
                         )
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamType val ->
             let
@@ -1040,7 +1040,7 @@ update msg model =
                         )
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppParamValidator val ->
             let
@@ -1048,7 +1048,7 @@ update msg model =
                     Maybe.map (\param -> { param | validator = val })
                         model.paramToModify
             in
-                ( { model | paramToModify = newParam }, Cmd.none )
+            ( { model | paramToModify = newParam }, Cmd.none )
 
         UpdateAppDefaultMaxRunTime val ->
             let
@@ -1058,7 +1058,7 @@ update msg model =
                 newApp =
                     { app | defaultMaxRunTime = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppDefaultMemoryPerNode val ->
             let
@@ -1078,7 +1078,7 @@ update msg model =
                 newApp =
                     { app | defaultMemoryPerNode = num }
             in
-                ( { model | app = newApp, error = err }, Cmd.none )
+            ( { model | app = newApp, error = err }, Cmd.none )
 
         UpdateAppDefaultNodeCount val ->
             let
@@ -1098,7 +1098,7 @@ update msg model =
                 newApp =
                     { app | defaultNodeCount = num }
             in
-                ( { model | app = newApp, error = err }, Cmd.none )
+            ( { model | app = newApp, error = err }, Cmd.none )
 
         UpdateAppDefaultProcessorsPerNode val ->
             let
@@ -1118,7 +1118,7 @@ update msg model =
                 newApp =
                     { app | defaultProcessorsPerNode = num }
             in
-                ( { model | app = newApp, error = err }, Cmd.none )
+            ( { model | app = newApp, error = err }, Cmd.none )
 
         UpdateAppDefaultQueue val ->
             let
@@ -1128,7 +1128,7 @@ update msg model =
                 newApp =
                     { app | defaultQueue = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppDeploymentPath val ->
             let
@@ -1138,7 +1138,7 @@ update msg model =
                 newApp =
                     { app | deploymentPath = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppDeploymentSystem val ->
             let
@@ -1148,7 +1148,7 @@ update msg model =
                 newApp =
                     { app | deploymentSystem = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppExecutionSystem val ->
             let
@@ -1158,7 +1158,7 @@ update msg model =
                 newApp =
                     { app | executionSystem = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppExecutionType val ->
             let
@@ -1168,7 +1168,7 @@ update msg model =
                 newApp =
                     { app | executionType = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppHelpUri val ->
             let
@@ -1178,7 +1178,7 @@ update msg model =
                 newApp =
                     { app | helpUri = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppLabel val ->
             let
@@ -1188,7 +1188,7 @@ update msg model =
                 newApp =
                     { app | label = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppLongDescription val ->
             let
@@ -1198,7 +1198,7 @@ update msg model =
                 newApp =
                     { app | longDescription = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppModules val ->
             let
@@ -1211,7 +1211,7 @@ update msg model =
                 newApp =
                     { app | modules = newModules }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppName val ->
             let
@@ -1221,7 +1221,7 @@ update msg model =
                 newApp =
                     { app | name = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppOntology val ->
             let
@@ -1234,7 +1234,7 @@ update msg model =
                 newApp =
                     { app | ontology = newOntology }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppParallelism val ->
             let
@@ -1244,7 +1244,7 @@ update msg model =
                 newApp =
                     { app | parallelism = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppShortDescription val ->
             let
@@ -1254,7 +1254,7 @@ update msg model =
                 newApp =
                     { app | shortDescription = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppTags val ->
             let
@@ -1267,7 +1267,7 @@ update msg model =
                 newApp =
                     { app | tags = newTags }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppTemplatePath val ->
             let
@@ -1277,7 +1277,7 @@ update msg model =
                 newApp =
                     { app | templatePath = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppTestPath val ->
             let
@@ -1287,7 +1287,7 @@ update msg model =
                 newApp =
                     { app | testPath = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateAppVersion val ->
             let
@@ -1297,7 +1297,7 @@ update msg model =
                 newApp =
                     { app | version = val }
             in
-                ( { model | app = newApp }, Cmd.none )
+            ( { model | app = newApp }, Cmd.none )
 
         UpdateIncomingJson json ->
             ( { model | incomingJson = Just json }, Cmd.none )
@@ -1388,20 +1388,20 @@ encodeApp app =
                         AppParamDefaultValBool b ->
                             JE.bool b
             in
-                [ ( "default", defValue )
-                , ( "type"
-                  , JE.string
-                        (String.toLower
-                            (paramTypeToString param.paramType)
-                        )
-                  )
-                , ( "order", JE.int param.displayOrder )
-                , ( "required", JE.bool param.required )
-                , ( "visible", JE.bool param.visible )
-                , ( "enquote", JE.bool param.enquoteValue )
-                ]
-                    ++ validator
-                    ++ enumVals
+            [ ( "default", defValue )
+            , ( "type"
+              , JE.string
+                    (String.toLower
+                        (paramTypeToString param.paramType)
+                    )
+              )
+            , ( "order", JE.int param.displayOrder )
+            , ( "required", JE.bool param.required )
+            , ( "visible", JE.bool param.visible )
+            , ( "enquote", JE.bool param.enquoteValue )
+            ]
+                ++ validator
+                ++ enumVals
 
         encodeParameter param =
             JE.object
@@ -1420,40 +1420,40 @@ encodeApp app =
                   )
                 ]
     in
-        JE.encode 4
-            (JE.object
-                [ ( "name", JE.string app.name )
-                , ( "version", JE.string app.version )
-                , ( "shortDescription", JE.string app.shortDescription )
-                , ( "longDescription", JE.string app.longDescription )
-                , ( "available", JE.bool app.available )
-                , ( "checkpointable", JE.bool app.checkpointable )
-                , ( "defaultMemoryPerNode", JE.int app.defaultMemoryPerNode )
-                , ( "defaultProcessorsPerNode"
-                  , JE.int app.defaultProcessorsPerNode
-                  )
-                , ( "defaultMaxRunTime", JE.string app.defaultMaxRunTime )
-                , ( "defaultNodeCount", JE.int app.defaultNodeCount )
-                , ( "defaultQueue", JE.string app.defaultQueue )
-                , ( "deploymentPath", JE.string app.deploymentPath )
-                , ( "deploymentSystem", JE.string app.deploymentSystem )
-                , ( "executionSystem", JE.string app.executionSystem )
-                , ( "executionType", JE.string app.executionType )
-                , ( "helpURI", JE.string app.helpUri )
-                , ( "label", JE.string app.label )
-                , ( "parallelism", JE.string app.parallelism )
-                , ( "templatePath", JE.string app.templatePath )
-                , ( "testPath", JE.string app.testPath )
-                , ( "modules", JE.list (List.map JE.string app.modules) )
-                , ( "tags", JE.list (List.map JE.string app.tags) )
-                , ( "ontology", JE.list (List.map JE.string app.ontology) )
-                , ( "inputs", JE.list (List.map encodeInput app.inputs) )
-                , ( "parameters"
-                  , JE.list (List.map encodeParameter app.parameters)
-                  )
-                , ( "outputs", JE.list (List.map JE.string app.outputs) )
-                ]
-            )
+    JE.encode 4
+        (JE.object
+            [ ( "name", JE.string app.name )
+            , ( "version", JE.string app.version )
+            , ( "shortDescription", JE.string app.shortDescription )
+            , ( "longDescription", JE.string app.longDescription )
+            , ( "available", JE.bool app.available )
+            , ( "checkpointable", JE.bool app.checkpointable )
+            , ( "defaultMemoryPerNode", JE.int app.defaultMemoryPerNode )
+            , ( "defaultProcessorsPerNode"
+              , JE.int app.defaultProcessorsPerNode
+              )
+            , ( "defaultMaxRunTime", JE.string app.defaultMaxRunTime )
+            , ( "defaultNodeCount", JE.int app.defaultNodeCount )
+            , ( "defaultQueue", JE.string app.defaultQueue )
+            , ( "deploymentPath", JE.string app.deploymentPath )
+            , ( "deploymentSystem", JE.string app.deploymentSystem )
+            , ( "executionSystem", JE.string app.executionSystem )
+            , ( "executionType", JE.string app.executionType )
+            , ( "helpURI", JE.string app.helpUri )
+            , ( "label", JE.string app.label )
+            , ( "parallelism", JE.string app.parallelism )
+            , ( "templatePath", JE.string app.templatePath )
+            , ( "testPath", JE.string app.testPath )
+            , ( "modules", JE.list (List.map JE.string app.modules) )
+            , ( "tags", JE.list (List.map JE.string app.tags) )
+            , ( "ontology", JE.list (List.map JE.string app.ontology) )
+            , ( "inputs", JE.list (List.map encodeInput app.inputs) )
+            , ( "parameters"
+              , JE.list (List.map encodeParameter app.parameters)
+              )
+            , ( "outputs", JE.list (List.map JE.string app.outputs) )
+            ]
+        )
 
 
 alterDisplayOrder direction indexToMove list =
@@ -1479,7 +1479,7 @@ alterDisplayOrder direction indexToMove list =
                                 else
                                     this.displayOrder
                 in
-                    { this | displayOrder = newOrder }
+                { this | displayOrder = newOrder }
             )
             list
         )
@@ -1498,23 +1498,23 @@ paneInputs model =
                         )
                     )
     in
-        div [ class "form-group", style [ ( "text-align", "center" ) ] ]
-            [ button
-                [ type_ "button"
-                , class "btn btn-default"
-                , onClick
-                    (OpenModifyAppInputDialog
-                        { initialAppInput
-                            | id = "INPUT" ++ toString nextDisplayOrder
-                            , label = "LABEL" ++ toString nextDisplayOrder
-                            , displayOrder = nextDisplayOrder
-                        }
-                    )
-                ]
-                [ text "Add Input" ]
-            , modifyAppInputDialog model
-            , appInputsTable model.app.inputs
+    div [ class "form-group", style [ ( "text-align", "center" ) ] ]
+        [ button
+            [ type_ "button"
+            , class "btn btn-default"
+            , onClick
+                (OpenModifyAppInputDialog
+                    { initialAppInput
+                        | id = "INPUT" ++ toString nextDisplayOrder
+                        , label = "LABEL" ++ toString nextDisplayOrder
+                        , displayOrder = nextDisplayOrder
+                    }
+                )
             ]
+            [ text "Add Input" ]
+        , modifyAppInputDialog model
+        , appInputsTable model.app.inputs
+        ]
 
 
 paneParameters : Model -> Html Msg
@@ -1530,23 +1530,23 @@ paneParameters model =
                         )
                     )
     in
-        div [ class "form-group", style [ ( "text-align", "center" ) ] ]
-            [ button
-                [ type_ "button"
-                , class "btn btn-default"
-                , onClick
-                    (OpenModifyAppParamDialog
-                        { initialAppParam
-                            | id = "PARAM" ++ toString nextDisplayOrder
-                            , label = "PARAM" ++ toString nextDisplayOrder
-                            , displayOrder = nextDisplayOrder
-                        }
-                    )
-                ]
-                [ text "Add Param" ]
-            , modifyAppParamDialog model
-            , appParamsTable model.app.parameters
+    div [ class "form-group", style [ ( "text-align", "center" ) ] ]
+        [ button
+            [ type_ "button"
+            , class "btn btn-default"
+            , onClick
+                (OpenModifyAppParamDialog
+                    { initialAppParam
+                        | id = "PARAM" ++ toString nextDisplayOrder
+                        , label = "PARAM" ++ toString nextDisplayOrder
+                        , displayOrder = nextDisplayOrder
+                    }
+                )
             ]
+            [ text "Add Param" ]
+        , modifyAppParamDialog model
+        , appParamsTable model.app.parameters
+        ]
 
 
 modifyAppInputDialog : Model -> Html Msg
@@ -1563,108 +1563,108 @@ modifyAppInputDialog model =
                             div [ class "alert alert-danger" ]
                                 [ text ("Error: " ++ e) ]
             in
-                div []
-                    [ err
-                    , div
-                        [ style
-                            [ ( "overflow-y", "auto" )
-                            , ( "max-height", "60vh" )
-                            ]
+            div []
+                [ err
+                , div
+                    [ style
+                        [ ( "overflow-y", "auto" )
+                        , ( "max-height", "60vh" )
                         ]
-                        [ Html.form []
-                            [ table []
-                                [ mkRowTextEntry "Id"
-                                    appInput.id
-                                    UpdateAppInputId
-                                , mkRowTextEntry "Label"
-                                    appInput.label
-                                    UpdateAppInputLabel
-                                , mkRowTextEntry
-                                    "Description"
-                                    appInput.description
-                                    UpdateAppInputDescription
-                                , mkRowTextEntry "Argument"
-                                    appInput.argument
-                                    UpdateAppInputArgument
-                                , mkRowCheckbox "Repeat Argument"
-                                    appInput.repeatArgument
-                                    UpdateAppInputToggleRepeatArgument
-                                , mkRowCheckbox "Show Argument"
-                                    appInput.showArgument
-                                    UpdateAppInputToggleShowArgument
-                                , mkRowCheckbox "Required"
-                                    appInput.required
-                                    UpdateAppInputToggleRequired
-                                , mkRowCheckbox
-                                    "Visible"
-                                    appInput.visible
-                                    UpdateAppInputToggleVisible
-                                , mkRowCheckbox "Enquote Value"
-                                    appInput.enquoteValue
-                                    UpdateAppInputToggleEnquoteValue
-                                , mkRowTextEntry "Default Value"
-                                    appInput.defaultValue
-                                    UpdateAppInputDefaultValue
-                                , mkRowTextEntry
-                                    "Display Order"
-                                    (toString appInput.displayOrder)
-                                    UpdateAppInputDisplayOrder
-                                , mkRowTextEntry
-                                    "Validator"
-                                    appInput.validator
-                                    UpdateAppInputValidator
-                                , mkRowTextEntry
-                                    "Ontology"
-                                    (String.join ", " appInput.ontology)
-                                    UpdateAppInputOntology
-                                , mkRowTextEntry
-                                    "Min Cardinality"
-                                    (toString appInput.minCardinality)
-                                    UpdateAppInputMinCardinality
-                                , mkRowTextEntry
-                                    "Max Cardinality"
-                                    (toString appInput.maxCardinality)
-                                    UpdateAppInputMaxCardinality
-                                , mkRowTextEntry
-                                    "File Types"
-                                    (String.join ", " appInput.fileTypes)
-                                    UpdateAppInputFileTypes
-                                ]
+                    ]
+                    [ Html.form []
+                        [ table []
+                            [ mkRowTextEntry "Id"
+                                appInput.id
+                                UpdateAppInputId
+                            , mkRowTextEntry "Label"
+                                appInput.label
+                                UpdateAppInputLabel
+                            , mkRowTextEntry
+                                "Description"
+                                appInput.description
+                                UpdateAppInputDescription
+                            , mkRowTextEntry "Argument"
+                                appInput.argument
+                                UpdateAppInputArgument
+                            , mkRowCheckbox "Repeat Argument"
+                                appInput.repeatArgument
+                                UpdateAppInputToggleRepeatArgument
+                            , mkRowCheckbox "Show Argument"
+                                appInput.showArgument
+                                UpdateAppInputToggleShowArgument
+                            , mkRowCheckbox "Required"
+                                appInput.required
+                                UpdateAppInputToggleRequired
+                            , mkRowCheckbox
+                                "Visible"
+                                appInput.visible
+                                UpdateAppInputToggleVisible
+                            , mkRowCheckbox "Enquote Value"
+                                appInput.enquoteValue
+                                UpdateAppInputToggleEnquoteValue
+                            , mkRowTextEntry "Default Value"
+                                appInput.defaultValue
+                                UpdateAppInputDefaultValue
+                            , mkRowTextEntry
+                                "Display Order"
+                                (toString appInput.displayOrder)
+                                UpdateAppInputDisplayOrder
+                            , mkRowTextEntry
+                                "Validator"
+                                appInput.validator
+                                UpdateAppInputValidator
+                            , mkRowTextEntry
+                                "Ontology"
+                                (String.join ", " appInput.ontology)
+                                UpdateAppInputOntology
+                            , mkRowTextEntry
+                                "Min Cardinality"
+                                (toString appInput.minCardinality)
+                                UpdateAppInputMinCardinality
+                            , mkRowTextEntry
+                                "Max Cardinality"
+                                (toString appInput.maxCardinality)
+                                UpdateAppInputMaxCardinality
+                            , mkRowTextEntry
+                                "File Types"
+                                (String.join ", " appInput.fileTypes)
+                                UpdateAppInputFileTypes
                             ]
                         ]
                     ]
+                ]
     in
-        Dialog.view
-            (case model.inputToModify of
-                Just input ->
-                    Just
-                        { closeMessage = Nothing
-                        , containerClass = Nothing
-                        , header = Just (text "Add Input")
-                        , body = Just (tbl input)
-                        , footer =
-                            Just
-                                (div
-                                    []
-                                    [ button
-                                        [ class "btn btn-primary"
-                                        , type_ "button"
-                                        , onClick SaveAppInput
-                                        ]
-                                        [ text "Save" ]
-                                    , button
-                                        [ class "btn btn-default"
-                                        , type_ "button"
-                                        , onClick CloseAppInputDialog
-                                        ]
-                                        [ text "Cancel" ]
+    Dialog.view
+        (case model.inputToModify of
+            Just input ->
+                Just
+                    { closeMessage = Nothing
+                    , containerClass = Nothing
+                    , header = Just (text "Add Input")
+                    , body = Just (tbl input)
+                    , footer =
+                        Just
+                            (div
+                                []
+                                [ button
+                                    [ class "btn btn-primary"
+                                    , type_ "button"
+                                    , onClick SaveAppInput
                                     ]
-                                )
-                        }
+                                    [ text "Save" ]
+                                , button
+                                    [ class "btn btn-default"
+                                    , type_ "button"
+                                    , onClick CloseAppInputDialog
+                                    ]
+                                    [ text "Cancel" ]
+                                ]
+                            )
+                    }
 
-                Nothing ->
-                    Nothing
-            )
+            Nothing ->
+                Nothing
+        )
 
 
 modifyAppParamDialog : Model -> Html Msg
@@ -1716,100 +1716,100 @@ modifyAppParamDialog model =
                         AppParamDefaultValString v ->
                             v
             in
-                div []
-                    [ err
-                    , div
-                        [ style
-                            [ ( "overflow-y", "auto" )
-                            , ( "max-height", "60vh" )
-                            ]
+            div []
+                [ err
+                , div
+                    [ style
+                        [ ( "overflow-y", "auto" )
+                        , ( "max-height", "60vh" )
                         ]
-                        [ Html.form []
-                            [ table []
-                                [ mkRowTextEntry "Id"
-                                    param.id
-                                    UpdateAppParamId
-                                , mkRowTextEntry "Label"
-                                    param.label
-                                    UpdateAppParamLabel
-                                , mkRowTextEntry "Description"
-                                    param.description
-                                    UpdateAppParamDescription
-                                , mkRowTextEntry "Display Order"
-                                    (toString param.displayOrder)
-                                    UpdateAppParamDisplayOrder
-                                , mkRowTextEntry "Argument"
-                                    param.argument
-                                    UpdateAppParamArgument
-                                , mkRowSelect "Type"
-                                    (List.map
-                                        paramTypeToString
-                                        [ StringParam
-                                        , NumberParam
-                                        , EnumerationParam
-                                        , BoolParam
-                                        , FlagParam
-                                        ]
-                                    )
-                                    (paramTypeToString param.paramType)
-                                    UpdateAppParamType
-                                , showEnumValues param
-                                , defValEntry
-                                , mkRowTextEntry "Validator"
-                                    param.validator
-                                    UpdateAppParamValidator
-                                , mkRowCheckbox "Show Argument"
-                                    param.showArgument
-                                    UpdateAppParamToggleShowArgument
-                                , mkRowCheckbox "Repeat Argument"
-                                    param.repeatArgument
-                                    UpdateAppParamToggleRepeatArgument
-                                , mkRowCheckbox "Required"
-                                    param.required
-                                    UpdateAppParamToggleRequired
-                                , mkRowCheckbox
-                                    "Visible"
-                                    param.visible
-                                    UpdateAppParamToggleVisible
-                                , mkRowCheckbox "Enquote Value"
-                                    param.enquoteValue
-                                    UpdateAppParamToggleEnquoteValue
-                                ]
+                    ]
+                    [ Html.form []
+                        [ table []
+                            [ mkRowTextEntry "Id"
+                                param.id
+                                UpdateAppParamId
+                            , mkRowTextEntry "Label"
+                                param.label
+                                UpdateAppParamLabel
+                            , mkRowTextEntry "Description"
+                                param.description
+                                UpdateAppParamDescription
+                            , mkRowTextEntry "Display Order"
+                                (toString param.displayOrder)
+                                UpdateAppParamDisplayOrder
+                            , mkRowTextEntry "Argument"
+                                param.argument
+                                UpdateAppParamArgument
+                            , mkRowSelect "Type"
+                                (List.map
+                                    paramTypeToString
+                                    [ StringParam
+                                    , NumberParam
+                                    , EnumerationParam
+                                    , BoolParam
+                                    , FlagParam
+                                    ]
+                                )
+                                (paramTypeToString param.paramType)
+                                UpdateAppParamType
+                            , showEnumValues param
+                            , defValEntry
+                            , mkRowTextEntry "Validator"
+                                param.validator
+                                UpdateAppParamValidator
+                            , mkRowCheckbox "Show Argument"
+                                param.showArgument
+                                UpdateAppParamToggleShowArgument
+                            , mkRowCheckbox "Repeat Argument"
+                                param.repeatArgument
+                                UpdateAppParamToggleRepeatArgument
+                            , mkRowCheckbox "Required"
+                                param.required
+                                UpdateAppParamToggleRequired
+                            , mkRowCheckbox
+                                "Visible"
+                                param.visible
+                                UpdateAppParamToggleVisible
+                            , mkRowCheckbox "Enquote Value"
+                                param.enquoteValue
+                                UpdateAppParamToggleEnquoteValue
                             ]
                         ]
                     ]
+                ]
     in
-        Dialog.view
-            (case model.paramToModify of
-                Just param ->
-                    Just
-                        { closeMessage = Nothing
-                        , containerClass = Nothing
-                        , header = Just (text "Add Param")
-                        , body = Just (body param)
-                        , footer =
-                            Just
-                                (div
-                                    []
-                                    [ button
-                                        [ class "btn btn-primary"
-                                        , type_ "button"
-                                        , onClick SaveAppParam
-                                        ]
-                                        [ text "Save" ]
-                                    , button
-                                        [ class "btn btn-default"
-                                        , type_ "button"
-                                        , onClick CloseAppParamDialog
-                                        ]
-                                        [ text "Cancel" ]
+    Dialog.view
+        (case model.paramToModify of
+            Just param ->
+                Just
+                    { closeMessage = Nothing
+                    , containerClass = Nothing
+                    , header = Just (text "Add Param")
+                    , body = Just (body param)
+                    , footer =
+                        Just
+                            (div
+                                []
+                                [ button
+                                    [ class "btn btn-primary"
+                                    , type_ "button"
+                                    , onClick SaveAppParam
                                     ]
-                                )
-                        }
+                                    [ text "Save" ]
+                                , button
+                                    [ class "btn btn-default"
+                                    , type_ "button"
+                                    , onClick CloseAppParamDialog
+                                    ]
+                                    [ text "Cancel" ]
+                                ]
+                            )
+                    }
 
-                Nothing ->
-                    Nothing
-            )
+            Nothing ->
+                Nothing
+        )
 
 
 showEnumValues : AppParam -> Html Msg
@@ -1850,26 +1850,26 @@ showEnumValues param =
         enumList enumValues =
             let
                 lastEnum =
-                    (List.length enumValues) - 1
+                    List.length enumValues - 1
             in
-                case List.isEmpty enumValues of
-                    True ->
-                        text ""
+            case List.isEmpty enumValues of
+                True ->
+                    text ""
 
-                    False ->
-                        table [ class "table" ]
-                            [ thead []
-                                [ tr []
-                                    [ th [] [ text "Name" ]
-                                    , th [] [ text "Value" ]
-                                    ]
+                False ->
+                    table [ class "table" ]
+                        [ thead []
+                            [ tr []
+                                [ th [] [ text "Name" ]
+                                , th [] [ text "Value" ]
                                 ]
-                            , tbody []
-                                (List.indexedMap
-                                    (mkRow lastEnum)
-                                    enumValues
-                                )
                             ]
+                        , tbody []
+                            (List.indexedMap
+                                (mkRow lastEnum)
+                                enumValues
+                            )
+                        ]
 
         inputTable =
             table []
@@ -1911,15 +1911,15 @@ showEnumValues param =
                 , tr [] [ td [] [ inputTable ] ]
                 ]
     in
-        case param.paramType of
-            EnumerationParam ->
-                tr []
-                    [ mkTh "Enum Values"
-                    , td [] [ tbl ]
-                    ]
+    case param.paramType of
+        EnumerationParam ->
+            tr []
+                [ mkTh "Enum Values"
+                , td [] [ tbl ]
+                ]
 
-            _ ->
-                tr [] []
+        _ ->
+            tr [] []
 
 
 appInputsTable : List AppInput -> Html Msg
@@ -1994,12 +1994,12 @@ appInputsTable inputs =
                     (List.indexedMap inputTr inputs)
                 ]
     in
-        case List.isEmpty inputs of
-            True ->
-                div [] [ text "No inputs" ]
+    case List.isEmpty inputs of
+        True ->
+            div [] [ text "No inputs" ]
 
-            False ->
-                tbl
+        False ->
+            tbl
 
 
 appParamsTable : List AppParam -> Html Msg
@@ -2086,12 +2086,12 @@ appParamsTable params =
                     (List.indexedMap paramTr params)
                 ]
     in
-        case List.isEmpty params of
-            True ->
-                div [] [ text "No params" ]
+    case List.isEmpty params of
+        True ->
+            div [] [ text "No params" ]
 
-            False ->
-                tbl
+        False ->
+            tbl
 
 
 view : Model -> Html Msg
@@ -2106,86 +2106,86 @@ view model =
                     div [ class "alert alert-danger" ]
                         [ text ("Error: " ++ e) ]
     in
-        Grid.container []
-            [ h1 [] [ text "The Appetizer" ]
-            , err
-            , Tab.config TabMsg
-                |> Tab.withAnimation
-                |> Tab.right
-                |> Tab.items
-                    [ Tab.item
-                        { id = "tabMain"
-                        , link = Tab.link [] [ text "Main" ]
-                        , pane =
-                            Tab.pane []
-                                [ br [] []
-                                , paneMain model.app
-                                ]
-                        }
-                    , Tab.item
-                        { id = "tabInputs"
-                        , link =
-                            Tab.link []
-                                [ text
-                                    ("Inputs ("
-                                        ++ toString
-                                            (List.length model.app.inputs)
-                                        ++ ")"
-                                    )
-                                ]
-                        , pane =
-                            Tab.pane []
-                                [ br [] []
-                                , paneInputs model
-                                ]
-                        }
-                    , Tab.item
-                        { id = "tabParams"
-                        , link =
-                            Tab.link []
-                                [ text
-                                    ("Parameters ("
-                                        ++ toString
-                                            (List.length model.app.parameters)
-                                        ++ ")"
-                                    )
-                                ]
-                        , pane =
-                            Tab.pane []
-                                [ br [] []
-                                , paneParameters model
-                                ]
-                        }
-                    , Tab.item
-                        { id = "tabAdvanced"
-                        , link = Tab.link [] [ text "Advanced" ]
-                        , pane =
-                            Tab.pane []
-                                [ br [] []
-                                , paneAdvanced model.app
-                                ]
-                        }
-                    , Tab.item
-                        { id = "tabJson"
-                        , link = Tab.link [] [ text "JSON" ]
-                        , pane =
-                            Tab.pane []
-                                [ br [] []
-                                , paneJson model
-                                ]
-                        }
-                    , Tab.item
-                        { id = "tabHelp"
-                        , link = Tab.link [] [ text "Help" ]
-                        , pane =
-                            Tab.pane []
-                                [ br [] []
-                                , paneHelp
-                                ]
-                        }
-                    ]
-                |> Tab.view model.tabState
-            ]
+    Grid.container []
+        [ h1 [] [ text "The Appetizer" ]
+        , err
+        , Tab.config TabMsg
+            |> Tab.withAnimation
+            |> Tab.right
+            |> Tab.items
+                [ Tab.item
+                    { id = "tabMain"
+                    , link = Tab.link [] [ text "Main" ]
+                    , pane =
+                        Tab.pane []
+                            [ br [] []
+                            , paneMain model.app
+                            ]
+                    }
+                , Tab.item
+                    { id = "tabInputs"
+                    , link =
+                        Tab.link []
+                            [ text
+                                ("Inputs ("
+                                    ++ toString
+                                        (List.length model.app.inputs)
+                                    ++ ")"
+                                )
+                            ]
+                    , pane =
+                        Tab.pane []
+                            [ br [] []
+                            , paneInputs model
+                            ]
+                    }
+                , Tab.item
+                    { id = "tabParams"
+                    , link =
+                        Tab.link []
+                            [ text
+                                ("Parameters ("
+                                    ++ toString
+                                        (List.length model.app.parameters)
+                                    ++ ")"
+                                )
+                            ]
+                    , pane =
+                        Tab.pane []
+                            [ br [] []
+                            , paneParameters model
+                            ]
+                    }
+                , Tab.item
+                    { id = "tabAdvanced"
+                    , link = Tab.link [] [ text "Advanced" ]
+                    , pane =
+                        Tab.pane []
+                            [ br [] []
+                            , paneAdvanced model.app
+                            ]
+                    }
+                , Tab.item
+                    { id = "tabJson"
+                    , link = Tab.link [] [ text "JSON" ]
+                    , pane =
+                        Tab.pane []
+                            [ br [] []
+                            , paneJson model
+                            ]
+                    }
+                , Tab.item
+                    { id = "tabHelp"
+                    , link = Tab.link [] [ text "Help" ]
+                    , pane =
+                        Tab.pane []
+                            [ br [] []
+                            , paneHelp
+                            ]
+                    }
+                ]
+            |> Tab.view model.tabState
+        ]
 
 
 
@@ -2203,11 +2203,11 @@ mkRowSelect label optList curOpt msg =
         mkOption val =
             option [ value val, selected (val == curOpt) ] [ text val ]
     in
-        tr []
-            [ mkTh label
-            , td []
-                [ select [ onInput msg ] (List.map mkOption optList) ]
-            ]
+    tr []
+        [ mkTh label
+        , td []
+            [ select [ onInput msg ] (List.map mkOption optList) ]
+        ]
 
 
 mkRowTextEntry : String -> String -> (String -> Msg) -> Html Msg
@@ -2289,46 +2289,46 @@ paneHelp =
         helpUrl =
             "http://developer.agaveapi.co/#inputs-and-parameters"
     in
-        div []
-            [ h2 [] [ text "Docs" ]
-            , text
-                ("This interface is intended to help you to describe all the "
-                    ++ "command-line arguments for a tool you wish to encode "
-                    ++ "as an app. It will generate the JSON needed to "
-                    ++ "describe the app to the Agave API. The official "
-                    ++ "documentation is available at "
-                )
-            , a [ href helpUrl ] [ text helpUrl ]
-            , text "."
-            , h2 [] [ text "Main" ]
-            , text "Basic information we need about your tool."
-            , h2 [] [ text "Inputs" ]
-            , text
-                ("Input are assets from the user that must be transferred "
-                    ++ "to the compute nodes for your app to run."
-                )
-            , h2 [] [ text "Parameters" ]
-            , text "Parameters describe how the app will behave."
-            , h2 [] [ text "Advanced" ]
-            , text
-                ("These are options to be configured by our developers, "
-                    ++ "so you can safely ignore anything that doesn't make "
-                    ++ "sense to you."
-                )
-            , h2 [] [ text "JSON" ]
-            , text
-                ("Once you have used the form to describe your app, "
-                    ++ "you can view/copy the JSON from this tab into a text "
-                    ++ "file that you can provide as an argument to "
-                    ++ "apps-add-update."
-                )
-            , br [] []
-            , text
-                ("You can also click the Manual Edit button to tweak the "
-                    ++ "JSON by hand or paste in an existing app's JSON "
-                    ++ "definition in order to edit it."
-                )
-            ]
+    div []
+        [ h2 [] [ text "Docs" ]
+        , text
+            ("This interface is intended to help you to describe all the "
+                ++ "command-line arguments for a tool you wish to encode "
+                ++ "as an app. It will generate the JSON needed to "
+                ++ "describe the app to the Agave API. The official "
+                ++ "documentation is available at "
+            )
+        , a [ href helpUrl ] [ text helpUrl ]
+        , text "."
+        , h2 [] [ text "Main" ]
+        , text "Basic information we need about your tool."
+        , h2 [] [ text "Inputs" ]
+        , text
+            ("Input are assets from the user that must be transferred "
+                ++ "to the compute nodes for your app to run."
+            )
+        , h2 [] [ text "Parameters" ]
+        , text "Parameters describe how the app will behave."
+        , h2 [] [ text "Advanced" ]
+        , text
+            ("These are options to be configured by our developers, "
+                ++ "so you can safely ignore anything that doesn't make "
+                ++ "sense to you."
+            )
+        , h2 [] [ text "JSON" ]
+        , text
+            ("Once you have used the form to describe your app, "
+                ++ "you can view/copy the JSON from this tab into a text "
+                ++ "file that you can provide as an argument to "
+                ++ "apps-add-update."
+            )
+        , br [] []
+        , text
+            ("You can also click the Manual Edit button to tweak the "
+                ++ "JSON by hand or paste in an existing app's JSON "
+                ++ "definition in order to edit it."
+            )
+        ]
 
 
 paneJson : Model -> Html Msg
@@ -2357,44 +2357,49 @@ modifyJsonDialog model =
                         [ text ("Error: " ++ e) ]
 
         body =
-            div []
+            div
+                [ style
+                    [ ( "overflow-y", "auto" )
+                    , ( "max-height", "60vh" )
+                    ]
+                ]
                 [ err
                 , textarea
                     [ cols 80, rows 30, onInput UpdateIncomingJson ]
                     [ text (encodeApp model.app) ]
                 ]
     in
-        Dialog.view
-            (case model.incomingJson of
-                Just json ->
-                    Just
-                        { closeMessage = Nothing
-                        , containerClass = Nothing
-                        , header = Just (text "Edit JSON")
-                        , body = Just body
-                        , footer =
-                            Just
-                                (div
-                                    []
-                                    [ button
-                                        [ class "btn btn-primary"
-                                        , type_ "button"
-                                        , onClick DecodeIncomingJson
-                                        ]
-                                        [ text "Save" ]
-                                    , button
-                                        [ class "btn btn-default"
-                                        , type_ "button"
-                                        , onClick CloseJsonDialog
-                                        ]
-                                        [ text "Cancel" ]
+    Dialog.view
+        (case model.incomingJson of
+            Just json ->
+                Just
+                    { closeMessage = Nothing
+                    , containerClass = Nothing
+                    , header = Just (text "Edit JSON")
+                    , body = Just body
+                    , footer =
+                        Just
+                            (div
+                                []
+                                [ button
+                                    [ class "btn btn-primary"
+                                    , type_ "button"
+                                    , onClick DecodeIncomingJson
                                     ]
-                                )
-                        }
+                                    [ text "Save" ]
+                                , button
+                                    [ class "btn btn-default"
+                                    , type_ "button"
+                                    , onClick CloseJsonDialog
+                                    ]
+                                    [ text "Cancel" ]
+                                ]
+                            )
+                    }
 
-                _ ->
-                    Nothing
-            )
+            _ ->
+                Nothing
+        )
 
 
 paneMain : App -> Html Msg
@@ -2654,7 +2659,7 @@ decodeIncomingJson model =
                 _ ->
                     ( model.app, Just "No JSON" )
     in
-        { model | app = newApp, jsonError = err }
+    { model | app = newApp, jsonError = err }
 
 
 
