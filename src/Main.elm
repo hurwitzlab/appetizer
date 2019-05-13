@@ -1999,10 +1999,10 @@ appInputsTable inputs =
     let
         checkIfTrue b =
             if b then
-                "✓"
+                "Yes"
 
             else
-                "✗"
+                "No"
 
         lastInput =
             List.length inputs - 1
