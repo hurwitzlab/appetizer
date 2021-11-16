@@ -1902,10 +1902,10 @@ appParamsTable params =
     let
         checkIfTrue b =
             if b then
-                "✓"
+                "Yes"
 
             else
-                "✗"
+                "No"
 
         defVal param =
             case param.defaultValue of
