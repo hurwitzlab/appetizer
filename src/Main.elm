@@ -10,7 +10,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Decode exposing (Decoder, at)
-import Json.Decode.Pipeline as Pipeline exposing (custom, optional, required)
+import Json.Decode.Pipeline as Pipeline exposing (optional, required)
 import Json.Encode as JE
 import List.Extra exposing (getAt, removeAt)
 import Reorderable as R
@@ -1795,7 +1795,7 @@ decoderAppInput =
     Decode.succeed AppInput
         |> Pipeline.required "id" Decode.string
         |> Pipeline.optionalAt [ "value", "default" ] Decode.string ""
-        |> custom (at [ "value", "order" ] Decode.int)
+        |> Pipeline.custom (at [ "value", "order" ] Decode.int)
         |> Pipeline.optionalAt [ "value", "validator" ] Decode.string ""
         |> Pipeline.optionalAt [ "value", "required" ] Decode.bool True
         |> Pipeline.optionalAt [ "value", "visible" ] Decode.bool True
